@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>सेंसिटिव फिंगर कंट्रोल</title>
+    <style>
+        /* ======================================================================
+         * स्टाइलिंग (CSS) - सादगी और फोकस के लिए
+         * ====================================================================== */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh; 
+            margin: 0;
+            background-color: #111; /* डार्क मोड ताकि फोकस बना रहे */
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            width: 95%;
+            max-width: 800px;
+            padding: 15px 0;
+            text-align: center;
+        }
+        h1 { color: #cc0000; margin-bottom: 5px; font-size: 1.5em; }
+        #info { font-size: 0.9em; color: #aaa; margin-bottom: 10px; }
+
+        /* YouTube प्लेयर कंटेनर */
+        #player-container {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: black;
+        }
+        
+        .input_video { display: none; }
+        
+        /* कर्सर */
+        #cursor {
+            position: fixed; 
+            width: 20px;
+            height: 20px;
+            background-color: rgba(76, 175, 80, 0.8); /* हरा */
+            border: 2px solid white;
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            display: none;
+            transition: background-color 0.1s, transform 0.1s;
+            z-index: 9999;
+        }
+        #cursor.action {
+            background-color: rgba(255, 235, 59, 0.9); /* पीला */
+            transform: translate(-50%, -50%) scale(1.5);
+        }
+
+        #status {
+            margin-top: 15px;
+            padding: 8px 15px;
+            background-color: #333;
+            border: 1px solid #555;
+            border-radius: 5px;
+            font-size: 0.9em;
+            z-index: 10000;
+        }
+    </style>
+    
+    <!-- MediaPipe और YouTube API लाइब्रेरी इम्पोर्ट करें -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script>
+      var tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      var firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    </script>
+</head>
+<body>
+
+    <video class="input_video"></video>
+
+    <div class="container">
+        <h1>सेंसिटिव फिंगर कंट्रोल (Browser Only)</h1>
+        <p id="info">कैमरे को अपनी उंगली दिखाएं। हल्की हलचल पर भी प्रतिक्रिया होगी।</p>
+        
+        <div id="player-container">
+            <div id="youtube-player"></div>
+        </div>
+
+        <div id="status">स्थिति: **कैमरे का इंतज़ार**</div>
+    </div>
+
+    <div id="cursor"></div>
+
+    <script>
+        // ======================================================================
+        // I. ग्लोबल वैरिएबल और कॉन्स्टेंट (अधिक सेंसिटिविटी के लिए)
+        // ======================================================================
+
+        const cursor = document.getElementById('cursor');
+        const statusElement = document.getElementById('status');
+        const videoId = 'dQw4w9WgXcQ'; // टेस्ट वीडियो ID
+        
+        let player; 
+        let lastActionTime = 0;
+        const ACTION_DEBOUNCE_MS = 800; // कूलडाउन समय (कम किया गया)
+        
+        // **अधिक सेंसिटिविटी के लिए थ्रेशोल्ड कम किए गए हैं**
+        const SWIPE_SENSITIVITY = 0.02; // स्वाइप के लिए मूवमेंट की मात्रा
+        const VERTICAL_SENSITIVITY = 0.01; // वॉल्यूम/स्क्रॉल के लिए मूवमेंट की मात्रा
+        const STILLNESS_TIME_MS = 700; // 0.7 सेकंड तक स्थिर रहने पर पॉज/प्ले
+        const PINCH_THRESHOLD = 0.04; // चुटकी के लिए दूरी
+        
+        let lastIndexX = 0;
+        let lastIndexY = 0;
+        let lastWristY = 0;
+        let stillnessTimer = 0;
+        let currentVolume = 50; 
+
+        // ======================================================================
+        // II. YOUTUBE PLAYER API फ़ंक्शंस (iFrame Player Control)
+        // ======================================================================
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('youtube-player', {
+                videoId: videoId,
+                playerVars: { 'controls': 0, 'modestbranding': 1, 'rel': 0 },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            statusElement.innerHTML = 'स्थिति: **YouTube प्लेयर तैयार। इशारे करना शुरू करें।**';
+            event.target.setVolume(currentVolume);
+        }
+
+        function onPlayerStateChange(event) {
+            const state = event.data;
+            let statusText = '';
+            if (state === YT.PlayerState.PLAYING) statusText = 'प्लेइंग';
+            else if (state === YT.PlayerState.PAUSED) statusText = 'रुका हुआ';
+            statusElement.innerHTML = `स्थिति: **${statusText}** | वॉल्यूम: ${player.getVolume()}%`;
+        }
+
+        function ytPlayPause() {
+            if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                player.pauseVideo();
+                updateStatus('पॉज किया गया', 'Play/Pause');
+            } else {
+                player.playVideo();
+                updateStatus('प्ले किया गया', 'Play/Pause');
+            }
+        }
+
+        function ytSeek(seconds) {
+            const newTime = player.getCurrentTime() + seconds;
+            player.seekTo(newTime, true);
+            updateStatus(`सीक: ${seconds > 0 ? '+' : ''}${seconds}s`, 'Seek');
+        }
+
+        function ytChangeVolume(delta) {
+            let currentVolume = player.getVolume();
+            let newVolume = Math.max(0, Math.min(100, currentVolume + delta));
+            player.setVolume(newVolume);
+            currentVolume = newVolume; // वैरिएबल अपडेट करें
+            updateStatus(`वॉल्यूम बदला: ${newVolume}%`, 'Volume');
+        }
+        
+        // =====================================================================
+        // III. MEDIAPIPE जेस्चर डिटेक्शन लॉजिक (अधिक सेंसिटिव)
+        // =====================================================================
+
+        function onResults(results) {
+            const now = Date.now();
+            cursor.style.display = 'none';
+            
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const landmarks = results.multiHandLandmarks[0];
+                
+                const indexTip = landmarks[8];
+                const thumbTip = landmarks[4];
+                const wrist = landmarks[0];
+                
+                // 1. कर्सर अपडेट करें (स्क्रीन के अनुसार)
+                const x = window.innerWidth * (1 - indexTip.x);
+                const y = window.innerHeight * indexTip.y;
+                cursor.style.display = 'block';
+                cursor.style.left = `${x}px`;
+                cursor.style.top = `${y}px`;
+                
+                // 2. कूलडाउन चेक करें
+                if (now - lastActionTime < ACTION_DEBOUNCE_MS) {
+                    lastIndexX = indexTip.x;
+                    lastIndexY = indexTip.y;
+                    lastWristY = wrist.y;
+                    return;
+                }
+
+                // --- जेस्चर 1: प्ले/पॉज (खुली हथेली को स्थिर रखना) ---
+                const isHandOpen = Math.sqrt(
+                    Math.pow(indexTip.x - thumbTip.x, 2) + Math.pow(indexTip.y - thumbTip.y, 2)
+                ) > PINCH_THRESHOLD; 
+                
+                const isHandStill = Math.abs(indexTip.x - lastIndexX) < HAND_STILL_THRESHOLD && 
+                                    Math.abs(indexTip.y - lastIndexY) < HAND_STILL_THRESHOLD;
+
+                if (isHandOpen && isHandStill) {
+                    if (stillnessTimer === 0) {
+                        stillnessTimer = now;
+                    } else if (now - stillnessTimer > STILLNESS_TIME_MS) {
+                        ytPlayPause();
+                        lastActionTime = now;
+                        stillnessTimer = 0; // रीसेट
+                        return;
+                    }
+                } else {
+                    stillnessTimer = 0; // हाथ हिलने पर रीसेट
+                }
+
+
+                // --- जेस्चर 2/3: सीक फॉरवर्ड/बैकवर्ड (तर्जनी का तेज स्वाइप) ---
+                const indexDeltaX = indexTip.x - lastIndexX;
+                const timeDelta = now - lastActionTime; 
+                const indexSpeedX = Math.abs(indexDeltaX) / (timeDelta / 1000);
+
+                if (indexSpeedX > SWIPE_SENSITIVITY * 20) { // तेज़ गति की जाँच
+                    if (indexDeltaX < 0) { // बाएँ (आगे +10s)
+                        ytSeek(10);
+                        lastActionTime = now;
+                        return;
+                    } else if (indexDeltaX > 0) { // दाएँ (पीछे -10s)
+                        ytSeek(-10);
+                        lastActionTime = now;
+                        return;
+                    }
+                }
+
+                // --- जेस्चर 4/5: वॉल्यूम कंट्रोल (तर्जनी का ऊपर/नीचे मूवमेंट) ---
+                if (Math.abs(indexDeltaY) > VERTICAL_MOVEMENT_THRESHOLD) { 
+                     if (indexDeltaY < 0) { // ऊपर की ओर (Volume Up)
+                        ytChangeVolume(5);
+                        lastActionTime = now;
+                        return;
+                    } else if (indexDeltaY > 0) { // नीचे की ओर (Volume Down)
+                        ytChangeVolume(-5);
+                        lastActionTime = now;
+                        return;
+                    }
+                }
+
+                // --- जेस्चर 6/7: पेज स्क्रॉलिंग (कलाई का मूवमेंट) ---
+                const SCROLL_SPEED = 0.015; // थोड़ी और सेंसिटिविटी
+                const wristDeltaY = wrist.y - lastWristY;
+                
+                if (Math.abs(wristDeltaY) > SCROLL_SPEED && now - lastActionTime > 500) { 
+                    // अगर कलाई हिल रही है, तो पेज स्क्रॉल करें
+                    const scrollAmount = Math.sign(wristDeltaY) * 100; 
+                    window.scrollBy(0, -scrollAmount); // ऊपर/नीचे के लिए साइन बदलना
+                }
+                
+                // 4. अगले फ्रेम के लिए वर्तमान स्थिति सहेजें
+                lastIndexX = indexTip.x;
+                lastIndexY = indexTip.y;
+                lastWristY = wrist.y;
+                
+            } else {
+                stillnessTimer = 0; // हाथ गायब होने पर रीसेट
+                lastWristY = 0;
+                cursor.style.display = 'none';
+            }
+        }
+
+
+        // ======================================================================
+        // IV. MEDIAPIPE और कैमरा सेटअप
+        // ======================================================================
+
+        const hands = new Hands({
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+
+        hands.setOptions({
+            maxNumHands: 1, 
+            modelComplexity: 1,
+            minDetectionConfidence: 0.8,
+            minTrackingConfidence: 0.8
+        });
+
+        hands.onResults(onResults);
+
+        const camera = new Camera(videoElement, {
+            onFrame: async () => {
+                await hands.send({ image: videoElement });
+            },
+            width: 640,
+            height: 480
+        });
+
+        // कैमरे को शुरू करने के लिए 3 सेकंड का विलंब
+        setTimeout(() => {
+            camera.start();
+            updateStatus('कैमरा शुरू हो गया है।', 'Init');
+        }, 3000); 
+        
+    </script>
+
+</body>
+</html>
