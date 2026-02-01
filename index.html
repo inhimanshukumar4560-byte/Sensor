@@ -3,32 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>फिंगर ट्रैकिंग कंट्रोल</title>
+    <title>हैंड जेस्चर नैविगेशन</title>
     <style>
-        body {
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden; /* शुरुआत में स्क्रॉलिंग को अक्षम करें */
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .page {
+            display: none; /* सभी पेजों को डिफ़ॉल्ट रूप से छिपाएं */
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f4f4f9;
-            color: #333;
-            overflow: hidden; /* पेज को स्क्रॉल होने से रोकें */
-        }
-        .container {
+            height: 100%;
+            width: 100%;
             text-align: center;
             padding: 20px;
+            box-sizing: border-box;
+        }
+        .page.active {
+            display: flex; /* केवल सक्रिय पेज दिखाएं */
         }
         h1 {
             color: #444;
             margin-bottom: 10px;
         }
-        #info {
-            margin-bottom: 25px;
-            font-size: 1.1em;
+        p {
+            font-size: 1.2em;
             color: #555;
+            max-width: 800px;
+            line-height: 1.6;
+        }
+        .button {
+            padding: 20px 40px;
+            font-size: 22px;
+            cursor: pointer;
+            border: none;
+            background-color: #007aff;
+            color: white;
+            border-radius: 12px;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+            font-weight: 600;
+            margin-top: 30px;
+        }
+        .button:hover, .button.hover-active {
+            background-color: #0056b3;
+            transform: scale(1.05);
         }
         #button-container {
             display: grid;
@@ -39,23 +62,17 @@
             border-radius: 12px;
             box-shadow: 0 6px 12px rgba(0,0,0,0.1);
         }
-        .button {
-            padding: 20px 30px;
+        #button-container .button {
             font-size: 18px;
-            cursor: pointer;
-            border: none;
-            background-color: #007aff;
-            color: white;
-            border-radius: 8px;
-            transition: transform 0.2s ease, background-color 0.2s ease;
-            font-weight: 600;
+            padding: 20px 30px;
+            margin-top: 0;
         }
-        .button:hover, .button.hover-active {
-            background-color: #0056b3;
-            transform: scale(1.05);
+        #page-instructions {
+            justify-content: flex-start; /* सामग्री को ऊपर से शुरू करें */
+            overflow-y: auto; /* इस पेज पर वर्टिकल स्क्रॉलिंग सक्षम करें */
         }
         #cursor {
-            position: absolute;
+            position: fixed; /* पेज स्क्रॉल होने पर भी कर्सर अपनी जगह पर रहे */
             width: 25px;
             height: 25px;
             background-color: rgba(255, 59, 48, 0.7);
@@ -63,7 +80,7 @@
             border-radius: 50%;
             pointer-events: none;
             transform: translate(-50%, -50%);
-            display: none; /* शुरुआत में छिपा हुआ */
+            display: none;
             transition: background-color 0.2s, transform 0.2s;
             z-index: 9999;
         }
@@ -71,7 +88,12 @@
             background-color: rgba(52, 199, 89, 0.9);
             transform: translate(-50%, -50%) scale(1.4);
         }
-        /* कैमरा व्यू को छिपाने के लिए */
+        #cursor.scrolling {
+            width: 15px;
+            height: 60px;
+            border-radius: 10px;
+            background-color: rgba(88, 86, 214, 0.8);
+        }
         .input_video {
             display: none;
         }
@@ -82,69 +104,102 @@
 </head>
 <body>
 
-    <!-- कैमरा फ़ीड के लिए वीडियो एलिमेंट (यह दिखाई नहीं देगा) -->
+    <!-- कैमरा फ़ीड के लिए वीडियो एलिमेंट -->
     <video class="input_video"></video>
-
-    <div class="container">
-        <h1>हैंड जेस्चर कंट्रोल</h1>
-        <p id="info">कैमरे के सामने अपनी तर्जनी (Index Finger) उंगली का प्रयोग करें।<br>क्लिक करने के लिए अंगूठे और तर्जनी को मिलाएं (चुटकी काटें)।</p>
-
-        <div id="button-container">
-            <button class="button" onclick="openNewPage('https://www.google.com')">Google</button>
-            <button class="button" onclick="openNewPage('https://www.youtube.com')">YouTube</button>
-            <button class="button" onclick="openNewPage('https://www.wikipedia.org')">Wikipedia</button>
-            <button class="button" onclick="openNewPage('https://github.com')">GitHub</button>
-            <button class="button" onclick="openNewPage('https://www.amazon.com')">Amazon</button>
-            <button class="button" onclick="openNewPage('https://www.facebook.com')">Facebook</button>
-            <button class="button" onclick="openNewPage('https://twitter.com')">Twitter</button>
-            <button class="button" onclick="openNewPage('https://www.instagram.com')">Instagram</button>
-            <button class="button" onclick="openNewPage('https://www.linkedin.com')">LinkedIn</button>
-        </div>
-    </div>
-
+    
     <!-- यह कर्सर उंगली को फॉलो करेगा -->
     <div id="cursor"></div>
 
+    <!-- पेज 1: वेलकम पेज -->
+    <div id="page-welcome" class="page active">
+        <h1>हैंड जेस्चर नियंत्रण में आपका स्वागत है</h1>
+        <p>यह डेमो आपको अपने हाथ के इशारों से वेबपेज को नियंत्रित करने की अनुमति देता है।<br>शुरू करने के लिए अपनी उंगली से नीचे दिए गए बटन पर क्लिक (चुटकी) करें।</p>
+        <button id="start-btn-1" class="button">शुरू करें (Get Started)</button>
+    </div>
+
+    <!-- पेज 2: निर्देश और स्क्रॉलिंग -->
+    <div id="page-instructions" class="page">
+        <h1>निर्देश और स्क्रॉलिंग</h1>
+        <p>बहुत बढ़िया! अब स्क्रॉलिंग का अभ्यास करें।<br><b>स्क्रॉल करने के लिए:</b> अपनी तर्जनी (Index) और मध्यमा (Middle) उंगली को एक साथ रखें और उन्हें ऊपर या नीचे ले जाएँ।<br><b>क्लिक करने के लिए:</b> अपनी तर्जनी और अंगूठे से चुटकी काटें।</p>
+        <p>यह एक डेमो टेक्स्ट है ताकि आप स्क्रॉलिंग का अभ्यास कर सकें। वेब इंटरैक्शन का भविष्य यहाँ है, जहाँ हमारे डिजिटल और भौतिक दुनिया के बीच की रेखाएँ धुंधली हो रही हैं। जेस्चर नियंत्रण केवल एक नवीनता नहीं है, बल्कि पहुँच और उपयोग में आसानी की दिशा में एक महत्वपूर्ण कदम है। यह उन स्थितियों में विशेष रूप से उपयोगी हो सकता है जहाँ पारंपरिक इनपुट डिवाइस अव्यावहारिक हैं।</p>
+        <p>कल्पना कीजिए कि आप रसोई में खाना बना रहे हैं और बिना स्क्रीन को छुए रेसिपी को स्क्रॉल कर सकते हैं, या एक सर्जन जो सर्जरी के दौरान इशारों से मेडिकल इमेज को नियंत्रित कर रहा है। संभावनाएं अनंत हैं।</p>
+        <p>जैसे-जैसे तकनीक विकसित होती है, इशारों की सटीकता और प्रतिक्रिया में सुधार होता रहेगा, जिससे वे और भी अधिक सहज और प्राकृतिक बन जाएंगे। MediaPipe जैसी लाइब्रेरी डेवलपर्स को इन शक्तिशाली क्षमताओं को उनके अनुप्रयोगों में एकीकृत करने में सक्षम बनाती है, जिससे नवाचार को बढ़ावा मिलता है।</p>
+        <p>नीचे स्क्रॉल करते रहें...</p>
+        <p>आप लगभग वहाँ हैं! बस थोड़ा और स्क्रॉल करें। यह अभ्यास यह सुनिश्चित करने के लिए है कि आप अगले चरण पर जाने से पहले स्क्रॉलिंग जेस्चर में सहज महसूस करें।</p>
+        <p>बहुत अच्छे! अब आप मुख्य नियंत्रण कक्ष पर जाने के लिए तैयार हैं। नीचे दिए गए बटन पर क्लिक करें।</p>
+        <button id="start-btn-2" class="button">आगे बढ़ें (Continue)</button>
+    </div>
+
+    <!-- पेज 3: मुख्य बटन ग्रिड -->
+    <div id="page-main" class="page">
+        <div class="container">
+            <h1>हैंड जेस्चर कंट्रोल</h1>
+            <p id="info">कैमरे के सामने अपनी तर्जनी (Index Finger) उंगली का प्रयोग करें।<br>क्लिक करने के लिए अंगूठे और तर्जनी को मिलाएं (चुटकी काटें)।</p>
+            <div id="button-container">
+                <button class="button" onclick="openNewPage('https://www.google.com')">Google</button>
+                <button class="button" onclick="openNewPage('https://www.youtube.com')">YouTube</button>
+                <button class="button" onclick="openNewPage('https://www.wikipedia.org')">Wikipedia</button>
+                <button class="button" onclick="openNewPage('https://github.com')">GitHub</button>
+                <button class="button" onclick="openNewPage('https://www.amazon.com')">Amazon</button>
+                <button class="button" onclick="openNewPage('https://www.facebook.com')">Facebook</button>
+                <button class="button" onclick="openNewPage('https://twitter.com')">Twitter</button>
+                <button class="button" onclick="openNewPage('https://www.instagram.com')">Instagram</button>
+                <button class="button" onclick="openNewPage('https://www.linkedin.com')">LinkedIn</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // DOM एलिमेंट्स को चुनें
         const videoElement = document.querySelector('.input_video');
         const cursor = document.getElementById('cursor');
-        const buttons = document.querySelectorAll('.button');
+        const pages = document.querySelectorAll('.page');
+        const startBtn1 = document.getElementById('start-btn-1');
+        const startBtn2 = document.getElementById('start-btn-2');
+        const instructionsPage = document.getElementById('page-instructions');
 
-        // एक ग्लोबल वैरिएबल यह ट्रैक करने के लिए कि क्या चुटकी का इशारा किया गया है
         let isPinched = false;
         let lastHoveredButton = null;
+        let lastScrollY = 0;
 
-        // किसी बटन पर क्लिक होने पर नया पेज खोलने का फंक्शन
+        function showPage(pageId) {
+            pages.forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+            
+            // निर्देश पेज के लिए स्क्रॉलिंग सक्षम करें
+            if (pageId === 'page-instructions') {
+                document.body.style.overflow = 'hidden';
+                instructionsPage.scrollTop = 0; // पेज दिखाने पर टॉप पर स्क्रॉल करें
+            } else {
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        startBtn1.addEventListener('click', () => showPage('page-instructions'));
+        startBtn2.addEventListener('click', () => showPage('page-main'));
+
         function openNewPage(url) {
             window.open(url, '_blank');
         }
 
-        // जब MediaPipe हाथ का पता लगाता है तो यह फंक्शन चलता है
         function onResults(results) {
-            cursor.style.display = 'none'; // हर फ्रेम पर कर्सर को छिपाएं
+            cursor.style.display = 'none';
+            cursor.classList.remove('scrolling');
 
             if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                // पहले हाथ के लैंडमार्क लें
                 const landmarks = results.multiHandLandmarks[0];
-                
-                // तर्जनी उंगली की नोक (Landmark #8)
                 const indexFingerTip = landmarks[8];
-                
-                // अंगूठे की नोक (Landmark #4)
+                const middleFingerTip = landmarks[12];
                 const thumbTip = landmarks[4];
                 
-                // normalized निर्देशांक (0 से 1) को स्क्रीन पिक्सेल में बदलें
-                // वीडियो मिरर होता है, इसलिए x-अक्ष को उल्टा (1 - x) करते हैं
                 const x = window.innerWidth * (1 - indexFingerTip.x);
                 const y = window.innerHeight * indexFingerTip.y;
                 
-                // कर्सर को दिखाएं और उसकी स्थिति अपडेट करें
                 cursor.style.display = 'block';
                 cursor.style.left = `${x}px`;
                 cursor.style.top = `${y}px`;
                 
-                // कर्सर के नीचे कौन सा एलिमेंट है, यह पता करें
                 const elementUnderCursor = document.elementFromPoint(x, y);
 
                 // होवर इफ़ेक्ट को मैनेज करें
@@ -157,58 +212,69 @@
                 } else {
                     lastHoveredButton = null;
                 }
+
+                // स्क्रॉल जेस्चर (तर्जनी और मध्यमा उंगली एक साथ)
+                const distanceIndexMiddle = Math.sqrt(
+                    Math.pow(indexFingerTip.x - middleFingerTip.x, 2) +
+                    Math.pow(indexFingerTip.y - middleFingerTip.y, 2)
+                );
+
+                if (document.getElementById('page-instructions').classList.contains('active') && distanceIndexMiddle < 0.07) {
+                    cursor.classList.add('scrolling');
+                    const currentY = (indexFingerTip.y + middleFingerTip.y) / 2;
+                    
+                    if (lastScrollY !== 0) {
+                        const deltaY = (currentY - lastScrollY) * window.innerHeight;
+                        instructionsPage.scrollBy(0, deltaY * 1.5); // स्क्रॉल की गति को समायोजित करें
+                    }
+                    lastScrollY = currentY;
+                    return; // जब स्क्रॉल कर रहे हों तो क्लिक न करें
+                }
                 
+                lastScrollY = 0; // स्क्रॉल जेस्चर नहीं होने पर रीसेट करें
+
                 // चुटकी (पिंच) के इशारे का पता लगाएं
-                const distance = Math.sqrt(
+                const distancePinch = Math.sqrt(
                     Math.pow(indexFingerTip.x - thumbTip.x, 2) +
                     Math.pow(indexFingerTip.y - thumbTip.y, 2)
                 );
                 
-                const pinchThreshold = 0.04; // चुटकी के लिए दूरी की सीमा
+                const pinchThreshold = 0.04;
 
-                if (distance < pinchThreshold) {
-                    // अगर चुटकी अभी-अभी शुरू हुई है
+                if (distancePinch < pinchThreshold) {
                     if (!isPinched) {
                         isPinched = true;
                         cursor.classList.add('clicked');
-                        
-                        // अगर कर्सर एक बटन के ऊपर है, तो उस पर क्लिक करें
                         if (elementUnderCursor && elementUnderCursor.classList.contains('button')) {
                            elementUnderCursor.click();
                         }
                     }
                 } else {
-                    // जब चुटकी खत्म हो जाए
                     if (isPinched) {
                         isPinched = false;
                         cursor.classList.remove('clicked');
                     }
                 }
             } else {
-                 // अगर कोई हाथ नहीं मिला, तो होवर इफ़ेक्ट हटा दें
                  if(lastHoveredButton) {
                     lastHoveredButton.classList.remove('hover-active');
                     lastHoveredButton = null;
                  }
+                 lastScrollY = 0; // हाथ न होने पर स्क्रॉल रीसेट करें
             }
         }
 
-        // MediaPipe Hands को कॉन्फ़िगर करें
         const hands = new Hands({
             locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
         });
-
         hands.setOptions({
-            maxNumHands: 1, // केवल एक हाथ को ट्रैक करें
+            maxNumHands: 1,
             modelComplexity: 1,
             minDetectionConfidence: 0.7,
             minTrackingConfidence: 0.7
         });
-
-        // रिजल्ट के लिए कॉलबैक सेट करें
         hands.onResults(onResults);
 
-        // कैमरे को शुरू करें
         const camera = new Camera(videoElement, {
             onFrame: async () => {
                 await hands.send({ image: videoElement });
@@ -217,8 +283,6 @@
             height: 480
         });
         camera.start();
-
     </script>
-
 </body>
 </html>
