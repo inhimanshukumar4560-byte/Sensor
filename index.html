@@ -516,6 +516,8 @@
             border: 2px solid white;
             z-index: 2;
             background-color: #000;
+            /* CHANGE: Added transform to mirror the local video (selfie view) */
+            transform: scaleX(-1);
         }
 
         .call-controls {
@@ -545,7 +547,8 @@
         .call-btn-circle:active { transform: scale(0.9); }
         .call-btn-circle svg { width: 30px; height: 30px; fill: white; }
         .btn-hangup { background-color: #f44336; }
-        .btn-mic { background-color: rgba(255,255,255,0.2); backdrop-filter: blur(5px); }
+        /* CHANGE: Consolidated background style for mic and switch camera buttons */
+        .btn-mic, .btn-switch-camera { background-color: rgba(255,255,255,0.2); backdrop-filter: blur(5px); }
 
         /* Incoming Call Modal */
         #incoming-call-modal {
@@ -912,6 +915,10 @@
                 <button id="hangupBtn" class="call-btn-circle btn-hangup">
                     <svg viewBox="0 0 24 24"><path d="M12,9C10.4,9 8.85,9.25 7.4,9.72L2.73,5.06L4.14,3.64C6.38,2.6 8.92,2 11.5,2C14.08,2 16.62,2.6 18.86,3.64L20.27,5.06L15.6,9.72C14.15,9.25 12.6,9 12,9Z" transform="rotate(180 12 12)"></path></svg>
                 </button>
+                <!-- CHANGE: Added camera switch button -->
+                <button id="switchCameraBtn" class="call-btn-circle btn-switch-camera">
+                    <svg viewBox="0 0 24 24"><path d="M20,4H4C2.89,4 2,4.89 2,6V18C2,19.1 2.9,20 4,20H20C21.1,20 22,19.1 22,18V6C22,4.89 21.1,4 20,4M20,18H4V6H20V18M17.5,12.5V15.5H16V12.5H14L16.5,9.5L19,12.5H17.5M6.5,11.5V8.5H8V11.5H10L7.5,14.5L5,11.5H6.5Z" transform="rotate(90 12 12)"></path></svg>
+                </button>
             </div>
         </div>
 
@@ -1003,6 +1010,8 @@
             let peerConnection = null;
             let currentCallId = null;
             let callRef = null;
+            // CHANGE: Added variable to track current camera facing mode
+            let currentFacingMode = 'user'; // 'user' for front, 'environment' for back
             
             const servers = {
                 iceServers: [
@@ -1023,6 +1032,8 @@
             const rejectCallBtn = document.getElementById('reject-call-btn');
             const incomingCallerName = document.getElementById('incoming-caller-name');
             const incomingCallerImg = document.getElementById('incoming-caller-img');
+            // CHANGE: Added a reference to the new switch camera button
+            const switchCameraBtn = document.getElementById('switchCameraBtn');
             
             // --- Mock DB for active chats (will be replaced by Firebase listener) ---
             const db = {
@@ -1442,7 +1453,11 @@
             // 1. Setup Local Media (Camera/Mic)
             async function setupLocalMedia() {
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    // CHANGE: Updated getUserMedia constraints to respect the current camera facing mode
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: currentFacingMode }, 
+                        audio: true 
+                    });
                     localVideo.srcObject = stream;
                     localStream = stream;
                     return stream;
@@ -1452,6 +1467,53 @@
                     return null;
                 }
             }
+            
+            // CHANGE: Added function to handle switching cameras
+            async function switchCamera() {
+                if (!localStream || !peerConnection) {
+                    console.warn("Cannot switch camera: local stream or peer connection is not ready.");
+                    return;
+                }
+
+                // Toggle the facing mode
+                currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+
+                try {
+                    // Get a new video stream with the new facing mode
+                    const newVideoStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: currentFacingMode }
+                    });
+                    const newVideoTrack = newVideoStream.getVideoTracks()[0];
+
+                    // Find the sender that is responsible for sending the video track
+                    const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+                    
+                    if (sender) {
+                        // Replace the old video track with the new one
+                        await sender.replaceTrack(newVideoTrack);
+                    }
+
+                    // Stop the old video track to release the camera
+                    localStream.getVideoTracks().forEach(track => track.stop());
+
+                    // Update the localStream variable with a new MediaStream object
+                    // that includes the new video track and the original audio track.
+                    const audioTrack = localStream.getAudioTracks()[0];
+                    localStream = new MediaStream([newVideoTrack, audioTrack]);
+                    
+                    // Update the local video element to show the new camera feed
+                    localVideo.srcObject = localStream;
+
+                } catch (error) {
+                    console.error("Error switching camera:", error);
+                    // Revert the facing mode if the switch fails
+                    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+                    alert("Could not switch camera. The other camera may not be available on your device.");
+                }
+            }
+            // CHANGE: Added event listener for the new button
+            switchCameraBtn.addEventListener('click', switchCamera);
+
 
             // 2. Start a Call (Caller Side)
             async function startCall(receiverUid) {
@@ -1613,11 +1675,13 @@
                 // Close Peer Connection
                 if (peerConnection) {
                     peerConnection.close();
+                    peerConnection = null;
                 }
                 
                 // Stop Local Stream
                 if (localStream) {
                     localStream.getTracks().forEach(track => track.stop());
+                    localStream = null;
                 }
 
                 // Reset UI
@@ -1631,6 +1695,9 @@
                     // database.ref(`calls/${currentCallId}`).remove(); // Optionally remove the call record
                 }
                 currentCallId = null;
+                
+                // CHANGE: Reset the facing mode to default for the next call
+                currentFacingMode = 'user';
             }
 
         });
