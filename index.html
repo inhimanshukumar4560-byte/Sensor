@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Batkaro</title>
     
+    <!-- Step 1: RAZORPAY SCRIPT (Payment ke liye zaroori hai) -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    
     <!-- Original Styles and Fonts -->
     <style>
         /* --- 🌑 GLOBAL THEME & STYLE (DEFAULT/LIGHT MODE) --- */
@@ -198,7 +201,8 @@
         }
         .app-logo-home { font-size: 1.5rem; font-weight: 700; color: var(--primary-pink); }
         .header-actions { display: flex; align-items: center; gap: 10px; }
-        .balance-display { background: #f0f0f0; padding: 5px 10px; border-radius: 20px; font-weight: 500; font-size: 0.9rem; }
+        .balance-display { background: #f0f0f0; padding: 5px 10px; border-radius: 20px; font-weight: 500; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
+        .balance-display .coin-icon { width: 18px; height: 18px; }
         .header-profile-icon img { width: 32px; height: 32px; border-radius: 50%; }
 
         .home-content {
@@ -345,23 +349,31 @@
         
         .profile-card-footer {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .profile-card .rate {
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-        
-        .card-actions {
-            display: flex;
+            flex-direction: column;
             gap: 8px;
         }
         
+        .profile-card .rate {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #ddd;
+            margin-bottom: 2px;
+        }
+        
+        /* MODIFIED: 3 Icon Layout */
+        .card-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 5px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(5px);
+            padding: 5px;
+            border-radius: 20px;
+        }
+        
         .card-action-btn {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             border: none;
             cursor: pointer;
@@ -374,9 +386,12 @@
              transform: scale(0.9);
          }
         
-        .card-action-btn.message-btn { background-color: var(--accent-cyan); }
-        .card-action-btn.call-btn { background-color: var(--primary-blue); }
-        .card-action-btn svg { width: 20px; height: 20px; fill: white; }
+        /* Specific Colors for New Actions */
+        .card-action-btn.chat-btn { background-color: var(--accent-cyan); }
+        .card-action-btn.voice-btn { background-color: var(--online-indicator); }
+        .card-action-btn.video-btn { background-color: var(--primary-pink); }
+        
+        .card-action-btn svg { width: 16px; height: 16px; fill: white; }
 
 
         /* --- 👤 PAGE 3 — PROFILE SCREEN --- */
@@ -577,6 +592,113 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
         }
+        
+        /* --- 💎 NEW: 3D GLASSY RECHARGE MODAL STYLES --- */
+        .recharge-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(10, 10, 15, 0.7);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center;
+            z-index: 3000; perspective: 1000px;
+        }
+        .recharge-modal-overlay.active { display: flex; }
+        
+        .recharge-modal {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            padding: 30px;
+            border-radius: 24px;
+            width: 90%; max-width: 380px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 20px 50px rgba(0,0,0,0.3), 
+                inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(5deg);
+            animation: floatModal 3s ease-in-out infinite alternate;
+            color: #fff;
+        }
+        
+        @keyframes floatModal {
+            0% { transform: translateY(0) rotateX(2deg); }
+            100% { transform: translateY(-10px) rotateX(5deg); }
+        }
+
+        .recharge-modal h3 {
+            text-align: center; margin-bottom: 5px;
+            font-size: 1.8rem; font-weight: 800;
+            background: linear-gradient(to right, #fff, #f8bbd0);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 10px rgba(233, 30, 99, 0.4);
+        }
+        .recharge-modal p {
+            text-align: center; margin-bottom: 20px;
+            color: rgba(255,255,255,0.8); font-size: 0.95rem;
+        }
+        
+        .recharge-plans-container {
+            max-height: 50vh; overflow-y: auto;
+            padding: 5px;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        
+        /* Custom scrollbar for glass modal */
+        .recharge-plans-container::-webkit-scrollbar { width: 4px; }
+        .recharge-plans-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
+
+        .recharge-plan {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative; overflow: hidden;
+        }
+        
+        .recharge-plan::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%); transition: 0.5s;
+        }
+        .recharge-plan:hover::before { transform: translateX(100%); }
+        
+        .recharge-plan:hover {
+            transform: translateY(-5px) scale(1.02);
+            background: linear-gradient(135deg, rgba(233, 30, 99, 0.2), rgba(233, 30, 99, 0.1));
+            border-color: rgba(233, 30, 99, 0.5);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .plan-details { display: flex; flex-direction: column; }
+        .plan-details span { font-weight: 700; font-size: 1.1rem; color: #fff; }
+        
+        .plan-details .bonus {
+            font-size: 0.75rem; color: #69f0ae;
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+        
+        .plan-price {
+            font-weight: 800; font-size: 1.2rem;
+            color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            background: rgba(255,255,255,0.1); padding: 5px 12px;
+            border-radius: 12px;
+        }
+        
+        .close-modal-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2);
+            width: 30px; height: 30px; border-radius: 50%;
+            color: white; font-size: 1.2rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .close-modal-btn:hover { background: rgba(244, 67, 54, 0.8); border-color: transparent; }
+
 
     </style>
     
@@ -810,9 +932,12 @@
             <header class="page-header">
                 <h1 class="app-logo-home">Batkaro</h1>
                 <div class="header-actions">
-                    <div class="balance-display">₹5.00</div>
+                    <div class="balance-display">
+                        <svg class="coin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#fbc02d" d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2Zm1.6,15.55h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2V8.45h3.2v4.42Z"/></svg>
+                        <span id="user-balance-minutes">0 Coins</span>
+                    </div>
                     <div class="header-profile-icon">
-                        <img src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=100" alt="My Profile">
+                        <img id="home-profile-img" src="https://via.placeholder.com/100" alt="My Profile">
                     </div>
                 </div>
             </header>
@@ -820,7 +945,7 @@
                 <div class="random-call-card">
                     <div class="text">
                         <h3>Connect & Make Friends</h3>
-                        <p>@ ₹5/min only!</p>
+                        <p>@ 4 coins/min only!</p>
                     </div>
                     <button class="random-call-btn">Random Call</button>
                 </div>
@@ -842,7 +967,7 @@
                 </div>
                 <div class="profile-actions">
                     <button class="profile-action-btn edit-profile-btn">Edit Profile</button>
-                    <button class="profile-action-btn add-balance-btn">Add Balance</button>
+                    <button class="profile-action-btn add-balance-btn">Add Coins</button>
                 </div>
             </header>
             <ul class="settings-list">
@@ -887,7 +1012,7 @@
                 <!-- Messages will be loaded from Firebase here -->
             </main>
             <footer class="chat-input-area">
-                <input id="chat-input-field" type="text" placeholder="Type a message...">
+                <input id="chat-input-field" type="text" placeholder="Type a message... (2 Coins/min)">
                 <button id="send-message-btn" class="send-btn"><svg viewBox="0 0 24 24"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"></path></svg></button>
             </footer>
         </div>
@@ -935,6 +1060,19 @@
                 </button>
             </div>
         </div>
+        
+        <!-- NEW: 3D GLASSY RECHARGE MODAL -->
+        <div id="recharge-modal-overlay" class="recharge-modal-overlay">
+            <div class="recharge-modal">
+                <button id="close-recharge-modal-btn" class="close-modal-btn">&times;</button>
+                <h3>Get More Coins!</h3>
+                <p>Top up to continue your conversations.</p>
+                <div id="recharge-plans-container" class="recharge-plans-container">
+                    <!-- Recharge plans will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+
 
         <!-- REGULAR USER BOTTOM NAVIGATION BAR -->
         <nav class="bottom-nav">
@@ -991,6 +1129,13 @@
             const signupImageUrlInput = document.getElementById('signup-image-url');
             const uploadStatus = document.getElementById('upload-status');
             const signupButton = signupForm.querySelector('button[type="submit"]');
+            
+            // NEW: Balance and Recharge Elements
+            const userBalanceMinutesDisplay = document.getElementById('user-balance-minutes');
+            const rechargeModalOverlay = document.getElementById('recharge-modal-overlay');
+            const closeRechargeModalBtn = document.getElementById('close-recharge-modal-btn');
+            const rechargePlansContainer = document.getElementById('recharge-plans-container');
+            const homeProfileImg = document.getElementById('home-profile-img');
 
             const CLOUD_NAME = 'dtvrhjtt4';
             const UPLOAD_PRESET = 'Soul_Spark';
@@ -998,7 +1143,13 @@
 
             let currentChatId = null;
             let currentUserId = null; 
+            let currentUserCoins = 0; // NEW: State for user's coin balance
             let currentOpenChatOtherUserId = null; 
+
+            // Costs constants
+            const COST_CHAT_PER_MIN = 2;
+            const COST_VOICE_PER_MIN = 4;
+            const COST_VIDEO_PER_MIN = 10;
 
             let messagesRef = null;
             let messagesListener = null;
@@ -1012,6 +1163,7 @@
             let callRef = null;
             // CHANGE: Added variable to track current camera facing mode
             let currentFacingMode = 'user'; // 'user' for front, 'environment' for back
+            let activeCallInterval = null;
             
             const servers = {
                 iceServers: [
@@ -1061,32 +1213,45 @@
                 });
             };
             
-            // --- MODIFIED: Central Authentication Logic ---
-            // This is the most important change. It checks the user's login state
-            // as soon as the app loads and decides which page to show.
+            // --- Central Authentication Logic ---
             auth.onAuthStateChanged(user => {
                 if (user) {
-                    // If user is logged in:
                     currentUserId = user.uid;
+                    listenForUserData(user.uid); // Listen for user data including coins
                     listenForNewChats(user.uid);
-                    listenForIncomingCalls(user.uid); // START LISTENING FOR CALLS
+                    listenForIncomingCalls(user.uid); 
                     fetchAllUsers();
-                    showPage('home-screen'); // Directly go to the home screen
+                    showPage('home-screen'); 
                 } else {
-                    // If user is not logged in:
                     currentUserId = null;
                     if (chatListListener) chatListListener.off();
-                    // Clear any old data from the screen
                     document.querySelector('.profile-grid').innerHTML = '';
                     document.querySelector('.chat-list').innerHTML = '';
-                    showPage('welcome-screen'); // Show the welcome screen
+                    showPage('welcome-screen');
                 }
             });
 
+            // Listen for user data from Firestore (Changed 'minutes' to 'coins')
+            function listenForUserData(uid) {
+                firestore.collection('users').doc(uid).onSnapshot(doc => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        currentUserCoins = userData.coins || 0; // Use 'coins'
+                        updateBalanceDisplay(currentUserCoins);
+                        if(userData.profileImg) {
+                            homeProfileImg.src = userData.profileImg;
+                        }
+                    }
+                });
+            }
+
+            // Update balance display
+            function updateBalanceDisplay(coins) {
+                userBalanceMinutesDisplay.textContent = `${coins} Coins`;
+            }
+
             // --- Event Listeners ---
             getStartedBtn.addEventListener('click', () => {
-                // This button's logic is now simpler. It will only be clicked
-                // when the user is logged out.
                 showPage('auth-screen');
             });
             
@@ -1100,7 +1265,7 @@
                 signupForm.classList.remove('hidden');
             });
             
-            // *** NEW: Cloudinary Image Upload Function ***
+            // Cloudinary Image Upload Function
             async function uploadImageToCloudinary(file) {
                 const formData = new FormData();
                 formData.append('file', file);
@@ -1119,35 +1284,32 @@
                 }
             }
 
-            // *** NEW: Event Listener for Image Selection ***
             signupImageInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
 
-                // Show preview
                 imagePreview.style.display = 'block';
                 imagePreview.src = URL.createObjectURL(file);
                 
-                // Update status and disable button
                 uploadStatus.textContent = 'Uploading image...';
                 signupButton.disabled = true;
 
                 const imageUrl = await uploadImageToCloudinary(file);
 
                 if (imageUrl) {
-                    signupImageUrlInput.value = imageUrl; // Store the URL in the hidden input
+                    signupImageUrlInput.value = imageUrl;
                     uploadStatus.textContent = 'Image uploaded successfully!';
-                    signupButton.disabled = false; // Re-enable button
+                    signupButton.disabled = false;
                 } else {
                     uploadStatus.textContent = 'Upload failed. Please try again.';
                     alert('Image upload failed. Please select another image.');
                     signupImageUrlInput.value = '';
                     imagePreview.style.display = 'none';
-                    signupButton.disabled = false; // Also re-enable on failure
+                    signupButton.disabled = false;
                 }
             });
 
-            // *** UPDATED: Signup Form Submission ***
+            // Signup Form Submission
             signupForm.addEventListener('submit', (e) => {
                 e.preventDefault();
 
@@ -1173,13 +1335,12 @@
                             gender: gender,
                             mobile: mobile,
                             email: email,
-                            profileImg: profileImg, // Use the uploaded image URL
+                            profileImg: profileImg,
+                            coins: 50, // Give new users 50 free coins
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
                     })
                     .then(() => {
-                        // After signup, the onAuthStateChanged will automatically handle
-                        // showing the home screen. No need to call showPage here.
                         signupForm.reset();
                         imagePreview.style.display = 'none';
                         uploadStatus.textContent = '';
@@ -1195,8 +1356,6 @@
                 const password = signinForm['signin-password'].value;
                 auth.signInWithEmailAndPassword(email, password)
                     .then(() => { 
-                        // After signin, the onAuthStateChanged will automatically handle
-                        // showing the home screen. No need to call showPage here.
                         signinForm.reset(); 
                     })
                     .catch(err => { alert("Failed to sign in. Please check your email and password."); console.error(err); });
@@ -1204,60 +1363,239 @@
 
             logoutBtn.addEventListener('click', () => {
                 auth.signOut();
-                // After signing out, onAuthStateChanged will automatically handle
-                // showing the welcome screen and cleaning up data.
             });
 
             navItems.forEach(item => {
                 item.addEventListener('click', () => { showPage(item.dataset.page); });
             });
             
-            // Simplified click listener for dynamic content
             document.body.addEventListener('click', (e) => {
                 const backButton = e.target.closest('.back-button');
                 if (backButton) { showPage(backButton.dataset.page); }
                 
-                const messageBtn = e.target.closest('.message-btn');
-                if (messageBtn) {
+                // ** CHAT BUTTON CLICK **
+                const chatBtn = e.target.closest('.chat-btn');
+                if (chatBtn) {
                      if (!currentUserId) { alert("Please sign in to chat."); return; }
-                    openChat(messageBtn.dataset.profileUid, messageBtn.dataset.profileName, messageBtn.dataset.profileImg);
+                     // Check coins for chat
+                     if (currentUserCoins < COST_CHAT_PER_MIN) {
+                         showRechargeModal();
+                         return;
+                     }
+                    openChat(chatBtn.dataset.profileUid, chatBtn.dataset.profileName, chatBtn.dataset.profileImg);
                 }
 
-                // *** MODIFIED CALL BUTTON CLICK ***
-                const callBtn = e.target.closest('.call-btn');
-                if (callBtn) {
+                // ** VOICE CALL BUTTON CLICK **
+                const voiceBtn = e.target.closest('.voice-btn');
+                if (voiceBtn) {
                      if (!currentUserId) { alert("Please sign in to call."); return; }
-                     // Extract data and start call
-                     const profileCard = callBtn.closest('.profile-card');
-                     const uid = profileCard.dataset.profileUid; // Get UID from parent card
-                     const name = callBtn.dataset.profileName;
-                     
-                     if(uid) {
-                         startCall(uid);
-                     } else {
-                         alert("Cannot call: User ID not found.");
+                     if (currentUserCoins < COST_VOICE_PER_MIN) {
+                         showRechargeModal();
+                         return;
                      }
+                     const profileCard = voiceBtn.closest('.profile-card');
+                     const uid = profileCard.dataset.profileUid;
+                     if(uid) startCall(uid, false); // false = Audio Only
+                }
+
+                // ** VIDEO CALL BUTTON CLICK **
+                const videoBtn = e.target.closest('.video-btn');
+                if (videoBtn) {
+                     if (!currentUserId) { alert("Please sign in to call."); return; }
+                     if (currentUserCoins < COST_VIDEO_PER_MIN) {
+                         showRechargeModal();
+                         return;
+                     }
+                     const profileCard = videoBtn.closest('.profile-card');
+                     const uid = profileCard.dataset.profileUid;
+                     if(uid) startCall(uid, true); // true = Video Call
                 }
 
                 const chatListItem = e.target.closest('.chat-list-item');
                 if(chatListItem) {
                     openChat(chatListItem.dataset.otherUserId, chatListItem.dataset.profileName, chatListItem.dataset.profileImg);
                 }
+                
+                // Add balance button from profile
+                const addBalanceBtn = e.target.closest('.add-balance-btn');
+                if(addBalanceBtn) {
+                    showRechargeModal();
+                }
             });
+
+            // --- RECHARGE MODAL LOGIC (UPDATED FOR PAYMENT) ---
+            function showRechargeModal() {
+                generateRechargePlans();
+                rechargeModalOverlay.classList.add('active');
+            }
+
+            function hideRechargeModal() {
+                rechargeModalOverlay.classList.remove('active');
+            }
+            
+            closeRechargeModalBtn.addEventListener('click', hideRechargeModal);
+
+            function generateRechargePlans() {
+                rechargePlansContainer.innerHTML = '';
+                // Rate: 1 Rupee = 1 Coin
+                const plans = [
+                    { amount: 10, bonusCoins: 0 },
+                    { amount: 20, bonusCoins: 2 },
+                    { amount: 50, bonusCoins: 5 },
+                    { amount: 100, bonusCoins: 15 },
+                    { amount: 200, bonusCoins: 35 },
+                    { amount: 500, bonusCoins: 100 }
+                ];
+
+                plans.forEach(plan => {
+                    const planElement = document.createElement('div');
+                    planElement.className = 'recharge-plan';
+                    
+                    const baseCoins = plan.amount;
+                    const totalCoins = baseCoins + plan.bonusCoins;
+
+                    let detailsHTML = `<div class="plan-details">
+                        <span>${totalCoins} Coins</span>`;
+
+                    if (plan.bonusCoins > 0) {
+                        detailsHTML += `<p class="bonus">+${plan.bonusCoins} Coins Bonus!</p>`;
+                    }
+                    detailsHTML += `</div>`;
+
+                    planElement.innerHTML = `${detailsHTML} <span class="plan-price">₹${plan.amount}</span>`;
+
+                    // **CHANGE** - This now calls the payment function instead of adding coins directly
+                    planElement.addEventListener('click', () => {
+                        initiateRecharge(plan.amount, totalCoins);
+                    });
+
+                    rechargePlansContainer.appendChild(planElement);
+                });
+            }
+
+            // --- NEW RAZORPAY PAYMENT INTEGRATION ---
+            
+            // Step 2: Payment Process Shuru Karne Wala Function
+            async function initiateRecharge(amount, coinsToAdd) {
+                if (!currentUserId) {
+                    alert("Please login first to recharge.");
+                    return;
+                }
+
+                try {
+                    // 1. Backend server se order_id mangwana
+                    const response = await fetch('/create-order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ amount: amount })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Server error, could not create order.');
+                    }
+                    
+                    const order = await response.json();
+
+                    // 2. Razorpay Popup ke liye options taiyar karna
+                    const options = {
+                        "key": "rzp_live_SDjCTqXe4qYEYs", // **UPDATED WITH YOUR LIVE KEY**
+                        "amount": order.amount,
+                        "currency": "INR",
+                        "name": "Batkaro App",
+                        "description": "Coin Recharge",
+                        "order_id": order.id,
+                        "handler": async function (response) {
+                            // Yeh function tab chalta hai jab payment successful ho jaata hai
+                            console.log("Payment Successful", response);
+                            alert("Payment Successful! Payment ID: " + response.razorpay_payment_id);
+                            
+                            // Ab Firebase me coins add karo
+                            addCoinsToDatabase(coinsToAdd);
+                        },
+                        "prefill": {
+                            // Optional: User ka data yahan daal sakte hain
+                            "email": auth.currentUser.email 
+                        },
+                        "theme": {
+                            "color": "#E91E63" // Aapka theme color
+                        }
+                    };
+
+                    // 3. Razorpay Popup ko kholna
+                    const rzp1 = new Razorpay(options);
+                    rzp1.on('payment.failed', function (response){
+                        alert("Payment Failed: " + response.error.description);
+                        console.error(response.error);
+                    });
+
+                    rzp1.open();
+                    
+                    hideRechargeModal(); // Modal ko band kar do
+
+                } catch (error) {
+                    console.error("Payment Error: ", error);
+                    alert("Payment failed to start. Please try again.");
+                }
+            }
+
+            // Step 3: Payment ke baad Firebase me Coins add karne wala function
+            async function addCoinsToDatabase(coins) {
+                if (!currentUserId) return;
+                try {
+                    const userRef = firestore.collection('users').doc(currentUserId);
+                    await userRef.update({
+                        coins: firebase.firestore.FieldValue.increment(coins)
+                    });
+                    alert(`Congratulations! ${coins} coins have been added to your account.`);
+                } catch (error) {
+                    console.error("Error adding coins to database:", error);
+                    alert("There was an error adding coins. Please contact support.");
+                }
+            }
+            
+            // Function to deduct coins periodically during a call
+            function startDeductionTimer(costPerMinute) {
+                if(activeCallInterval) clearInterval(activeCallInterval);
+                
+                activeCallInterval = setInterval(async () => {
+                    if(!currentUserId) return;
+                    
+                    // Client side check to stop if funds run out
+                    if (currentUserCoins < costPerMinute) {
+                         endCall();
+                         alert("Call ended: Insufficient coins.");
+                         return;
+                    }
+                    
+                    try {
+                        const userRef = firestore.collection('users').doc(currentUserId);
+                        await userRef.update({
+                            coins: firebase.firestore.FieldValue.increment(-costPerMinute) // Deduct 1 minute worth
+                        });
+                    } catch (e) {
+                        console.error("Deduction error", e);
+                    }
+                }, 60000); // Run every 60 seconds
+            }
+            
+            function stopDeductionTimer() {
+                if(activeCallInterval) {
+                    clearInterval(activeCallInterval);
+                    activeCallInterval = null;
+                }
+            }
+
 
             // --- CHAT AND USER-RELATED FUNCTIONS ---
 
-            // *** NEW: Function to mark messages as seen ***
             function markMessagesAsSeen(chatId, otherUserId) {
                 if (!chatId || !otherUserId) return;
 
                 const messagesRef = database.ref(`chats/${chatId}`);
-                // Find messages sent by the other user that are not yet 'seen'
                 messagesRef.orderByChild('senderId').equalTo(otherUserId).once('value', snapshot => {
                     snapshot.forEach(childSnapshot => {
                         const message = childSnapshot.val();
                         if (message.status !== 'seen') {
-                            // Update the status of this specific message to 'seen'
                             childSnapshot.ref.update({ status: 'seen' });
                         }
                     });
@@ -1275,7 +1613,6 @@
                 headerInfo.querySelector('img').src = img;
                 
                 loadMessages(currentChatId);
-                // *** NEW: Mark incoming messages as seen when chat is opened ***
                 markMessagesAsSeen(currentChatId, otherUserId);
                 showPage('chat-conversation-screen');
             }
@@ -1303,15 +1640,11 @@
                 const messageBubble = document.createElement('div');
                 messageBubble.classList.add('message-bubble', message.senderId === currentUserId ? 'sent' : 'received');
 
-                // MODIFIED: Logic to display single, double, and blue ticks
                 const getTicksHTML = (status) => {
-                    // Assuming 'delivered' status might be added later. For now, anything not 'sent' is treated as delivered (double grey tick).
-                    // And if it's 'seen', the '.seen' class will make it blue.
                     if (status === 'sent') {
-                        return '<span class="ticks">✓</span>'; // Single grey tick
+                        return '<span class="ticks">✓</span>'; 
                     }
-                    // For 'delivered' or 'seen'
-                    return `<span class="ticks ${status === 'seen' ? 'seen' : ''}">✓✓</span>`; // Double tick (blue if seen)
+                    return `<span class="ticks ${status === 'seen' ? 'seen' : ''}">✓✓</span>`;
                 };
 
                 messageBubble.innerHTML = `
@@ -1329,6 +1662,12 @@
                 const messageText = chatInput.value.trim();
                 if (messageText === '' || !currentChatId || !currentUserId) return;
 
+                if (currentUserCoins < 1) { 
+                     alert("Low balance! Please recharge to chat.");
+                     showRechargeModal();
+                     return;
+                }
+
                 try {
                     const myProfileDoc = await firestore.collection('users').doc(currentUserId).get();
                     const otherProfileDoc = await firestore.collection('users').doc(currentOpenChatOtherUserId).get();
@@ -1341,7 +1680,6 @@
                     const myProfileData = myProfileDoc.data();
                     const otherProfileData = otherProfileDoc.data();
 
-                    // Message status starts as 'sent'. It will be updated to 'delivered' and 'seen' by other events.
                     const messageData = { senderId: currentUserId, text: messageText, timestamp: firebase.database.ServerValue.TIMESTAMP, status: 'sent' };
                     await database.ref(`chats/${currentChatId}`).push().set(messageData);
                     
@@ -1392,14 +1730,13 @@
             sendBtn.addEventListener('click', sendMessage);
             chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-            // *** NEW: Functions to fetch and display all users on home screen ***
             async function fetchAllUsers() {
                 if (!currentUserId) return;
                 try {
                     const usersSnapshot = await firestore.collection('users').get();
                     const users = [];
                     usersSnapshot.forEach(doc => {
-                        if (doc.id !== currentUserId) { // Don't show the current user's own profile
+                        if (doc.id !== currentUserId) {
                             users.push(doc.data());
                         }
                     });
@@ -1409,13 +1746,14 @@
                 }
             }
 
+            // MODIFIED: Render Users with 3 Buttons
             function renderUsersOnHomeScreen(users) {
                 const profileGrid = document.querySelector('.profile-grid');
-                profileGrid.innerHTML = ''; // Clear previous users
+                profileGrid.innerHTML = '';
                 users.forEach(user => {
                     const profileCard = document.createElement('div');
                     profileCard.className = 'profile-card';
-                    profileCard.dataset.profileUid = user.uid; // IMPORTANT: Set UID here for calls
+                    profileCard.dataset.profileUid = user.uid;
 
                     profileCard.innerHTML = `
                         <img src="${user.profileImg}" alt="Profile" class="profile-card-img">
@@ -1432,13 +1770,19 @@
                                 <span>Hindi</span> • <span>Friendly</span>
                             </div>
                             <div class="profile-card-footer">
-                                <span class="rate">₹5/min</span>
+                                <span class="rate">Chat: 2 | Voice: 4 | Video: 10 (Coins/min)</span>
                                 <div class="card-actions">
-                                    <button class="card-action-btn message-btn" data-profile-uid="${user.uid}" data-profile-name="${user.name}" data-profile-img="${user.profileImg}">
+                                    <!-- Chat Button -->
+                                    <button class="card-action-btn chat-btn" data-profile-uid="${user.uid}" data-profile-name="${user.name}" data-profile-img="${user.profileImg}">
                                         <svg viewBox="0 0 24 24"><path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2M20 16H5.2L4 17.2V4H20V16Z"></path></svg>
                                     </button>
-                                    <button class="card-action-btn call-btn" data-profile-name="${user.name} • ${user.age} Y">
+                                    <!-- Voice Call Button -->
+                                    <button class="card-action-btn voice-btn" data-profile-name="${user.name} • ${user.age} Y">
                                         <svg viewBox="0 0 24 24"><path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z"></path></svg>
+                                    </button>
+                                    <!-- Video Call Button -->
+                                    <button class="card-action-btn video-btn" data-profile-name="${user.name} • ${user.age} Y">
+                                       <svg viewBox="0 0 24 24"><path d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z"></path></svg>
                                     </button>
                                 </div>
                             </div>
@@ -1450,16 +1794,23 @@
             
             // --- 📞 WEBRTC IMPLEMENTATION 📞 ---
 
-            // 1. Setup Local Media (Camera/Mic)
-            async function setupLocalMedia() {
+            async function setupLocalMedia(isVideo) {
                 try {
-                    // CHANGE: Updated getUserMedia constraints to respect the current camera facing mode
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: currentFacingMode }, 
-                        audio: true 
-                    });
+                    const constraints = {
+                        audio: true,
+                        video: isVideo ? { facingMode: currentFacingMode } : false
+                    };
+                    
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
                     localVideo.srcObject = stream;
                     localStream = stream;
+                    
+                    if (!isVideo) {
+                        localVideo.style.display = 'none';
+                    } else {
+                        localVideo.style.display = 'block';
+                    }
+                    
                     return stream;
                 } catch (error) {
                     console.error('Error accessing media devices.', error);
@@ -1468,110 +1819,89 @@
                 }
             }
             
-            // CHANGE: Added function to handle switching cameras
             async function switchCamera() {
                 if (!localStream || !peerConnection) {
                     console.warn("Cannot switch camera: local stream or peer connection is not ready.");
                     return;
                 }
+                
+                if (localStream.getVideoTracks().length === 0) return;
 
-                // Toggle the facing mode
                 currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
 
                 try {
-                    // Get a new video stream with the new facing mode
                     const newVideoStream = await navigator.mediaDevices.getUserMedia({
                         video: { facingMode: currentFacingMode }
                     });
                     const newVideoTrack = newVideoStream.getVideoTracks()[0];
-
-                    // Find the sender that is responsible for sending the video track
                     const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
                     
                     if (sender) {
-                        // Replace the old video track with the new one
                         await sender.replaceTrack(newVideoTrack);
                     }
 
-                    // Stop the old video track to release the camera
                     localStream.getVideoTracks().forEach(track => track.stop());
 
-                    // Update the localStream variable with a new MediaStream object
-                    // that includes the new video track and the original audio track.
                     const audioTrack = localStream.getAudioTracks()[0];
                     localStream = new MediaStream([newVideoTrack, audioTrack]);
                     
-                    // Update the local video element to show the new camera feed
                     localVideo.srcObject = localStream;
 
                 } catch (error) {
                     console.error("Error switching camera:", error);
-                    // Revert the facing mode if the switch fails
                     currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
                     alert("Could not switch camera. The other camera may not be available on your device.");
                 }
             }
-            // CHANGE: Added event listener for the new button
             switchCameraBtn.addEventListener('click', switchCamera);
 
-
-            // 2. Start a Call (Caller Side)
-            async function startCall(receiverUid) {
-                await setupLocalMedia();
+            async function startCall(receiverUid, isVideo) {
+                await setupLocalMedia(isVideo);
                 if(!localStream) return;
+                
+                startDeductionTimer(isVideo ? COST_VIDEO_PER_MIN : COST_VOICE_PER_MIN);
 
                 showPage('call-screen');
 
-                // Create a new call document reference in Firebase
                 callRef = database.ref('calls').push();
                 currentCallId = callRef.key;
 
-                // Setup Peer Connection
                 peerConnection = new RTCPeerConnection(servers);
 
-                // Add local tracks to peer connection
                 localStream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, localStream);
                 });
 
-                // Listen for remote tracks
                 peerConnection.ontrack = event => {
                     event.streams[0].getTracks().forEach(track => {
                         remoteVideo.srcObject = event.streams[0];
                     });
                 };
 
-                // Collect ICE Candidates and send to Firebase
                 peerConnection.onicecandidate = event => {
                     if (event.candidate) {
                         callRef.child('offerCandidates').push(event.candidate.toJSON());
                     }
                 };
 
-                // Create Offer
                 const offerDescription = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offerDescription);
 
-                // Fetch caller's info to send
                 const callerDoc = await firestore.collection('users').doc(currentUserId).get();
                 const callerData = callerDoc.data();
 
-                // Write Offer to Firebase
                 const callData = {
-                    offer: {
-                        sdp: offerDescription.sdp,
-                        type: offerDescription.type,
-                    },
+                    offer: { sdp: offerDescription.sdp, type: offerDescription.type },
                     callerId: currentUserId,
                     callerName: callerData.name || "Unknown",
                     callerImg: callerData.profileImg || "",
                     receiverId: receiverUid,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    type: isVideo ? 'video' : 'voice' // Store call type
                 };
                 
                 await callRef.set(callData);
 
-                // Listen for Answer
                 callRef.on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data && data.answer && !peerConnection.currentRemoteDescription) {
@@ -1580,91 +1910,80 @@
                     }
                 });
 
-                // Listen for Remote ICE Candidates
                 callRef.child('answerCandidates').on('child_added', (snapshot) => {
                     const candidate = new RTCIceCandidate(snapshot.val());
                     peerConnection.addIceCandidate(candidate);
                 });
             }
 
-            // 3. Listen for Incoming Calls (Receiver Side)
             function listenForIncomingCalls(uid) {
-                // Listen to the 'calls' node where receiverId matches current user
                 database.ref('calls').orderByChild('receiverId').equalTo(uid).limitToLast(1).on('child_added', (snapshot) => {
                     const data = snapshot.val();
                     if (data && !data.answer && (Date.now() - data.timestamp < 60000)) { 
-                        // Show incoming call modal if no answer yet and call is fresh (< 60s)
                         currentCallId = snapshot.key;
-                        showIncomingCallModal(data.callerName, data.callerImg);
+                        showIncomingCallModal(data.callerName, data.callerImg, data.type);
                     }
                 });
             }
 
-            function showIncomingCallModal(name, img) {
+            function showIncomingCallModal(name, img, type) {
                 incomingCallerName.textContent = name;
                 incomingCallerImg.src = img || "https://via.placeholder.com/100";
                 incomingCallModal.classList.add('active');
             }
 
-            // 4. Answer Call
             acceptCallBtn.addEventListener('click', async () => {
                 incomingCallModal.classList.remove('active');
-                await setupLocalMedia();
-                if(!localStream) return;
-                
-                showPage('call-screen');
                 
                 callRef = database.ref(`calls/${currentCallId}`);
                 const callSnapshot = await callRef.get();
                 const callData = callSnapshot.val();
                 
+                const isVideo = callData.type === 'video';
+                
+                await setupLocalMedia(isVideo);
+                if(!localStream) return;
+                
+                showPage('call-screen');
+                
                 peerConnection = new RTCPeerConnection(servers);
 
-                 // Add local tracks
                  localStream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, localStream);
                 });
 
-                // Handle remote stream
                 peerConnection.ontrack = event => {
                     event.streams[0].getTracks().forEach(track => {
                         remoteVideo.srcObject = event.streams[0];
                     });
                 };
 
-                // ICE Candidates
                 peerConnection.onicecandidate = event => {
                     if (event.candidate) {
                         callRef.child('answerCandidates').push(event.candidate.toJSON());
                     }
                 };
 
-                // Set Remote Description (Offer)
                 const offerDescription = callData.offer;
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(offerDescription));
 
-                // Create Answer
                 const answerDescription = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answerDescription);
 
-                // Update Firebase with Answer
                 const answer = {
                     type: answerDescription.type,
                     sdp: answerDescription.sdp,
                 };
                 await callRef.update({ answer });
 
-                // Listen for Offer Candidates
                 callRef.child('offerCandidates').on('child_added', (snapshot) => {
                     const candidate = new RTCIceCandidate(snapshot.val());
                     peerConnection.addIceCandidate(candidate);
                 });
             });
 
-            // 5. Reject / Hangup Call
             rejectCallBtn.addEventListener('click', () => {
                 incomingCallModal.classList.remove('active');
-                // Optional: Update DB to say rejected
             });
 
             hangupBtn.addEventListener('click', () => {
@@ -1672,31 +1991,27 @@
             });
 
             function endCall() {
-                // Close Peer Connection
+                stopDeductionTimer(); // Stop charging
+                
                 if (peerConnection) {
                     peerConnection.close();
                     peerConnection = null;
                 }
                 
-                // Stop Local Stream
                 if (localStream) {
                     localStream.getTracks().forEach(track => track.stop());
                     localStream = null;
                 }
 
-                // Reset UI
                 localVideo.srcObject = null;
                 remoteVideo.srcObject = null;
                 showPage('home-screen');
                 
-                // Remove call from DB (optional cleanup)
                 if (callRef) {
-                    callRef.off(); // Remove listeners
-                    // database.ref(`calls/${currentCallId}`).remove(); // Optionally remove the call record
+                    callRef.off();
                 }
                 currentCallId = null;
                 
-                // CHANGE: Reset the facing mode to default for the next call
                 currentFacingMode = 'user';
             }
 
