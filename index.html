@@ -699,6 +699,24 @@
         }
         .close-modal-btn:hover { background: rgba(244, 67, 54, 0.8); border-color: transparent; }
 
+        /* WHATSAPP BUTTON STYLE */
+        .whatsapp-promo {
+            margin-top: 15px;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            padding: 12px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+            text-decoration: none;
+            display: block;
+            transition: transform 0.2s;
+        }
+        .whatsapp-promo:active { transform: scale(0.98); }
+        .whatsapp-promo strong { display: block; font-size: 0.95rem; margin-bottom: 2px; }
+        .whatsapp-promo small { font-size: 0.8rem; opacity: 0.9; }
 
     </style>
     
@@ -1471,6 +1489,17 @@
 
                     rechargePlansContainer.appendChild(planElement);
                 });
+                
+                // *** NEW: WHATSAPP PAYMENT BUTTON ***
+                const waButton = document.createElement('a');
+                waButton.className = 'whatsapp-promo';
+                waButton.href = "https://wa.me/917390928912?text=I%20want%20to%20buy%20coins%20for%20Batkaro%20App.%20Please%20help.";
+                waButton.target = "_blank";
+                waButton.innerHTML = `
+                    <strong>Payment Failed? Chat on WhatsApp</strong>
+                    <small>Get Cheaper Rates + 10 Extra Coins!</small>
+                `;
+                rechargePlansContainer.appendChild(waButton);
             }
 
             // --- NEW RAZORPAY PAYMENT INTEGRATION ---
@@ -1617,21 +1646,22 @@
                 showPage('chat-conversation-screen');
             }
 
+            // *** OPTIMIZED CHAT LOADING FUNCTION (FIX FOR SLOW CHAT) ***
             function loadMessages(chatId) {
-                if (messagesRef && messagesListener) { 
-                    messagesRef.off('value', messagesListener); 
+                // Remove old listener
+                if (messagesRef) { 
+                    messagesRef.off(); 
                 }
                 
                 const messagesContainer = document.querySelector('.chat-messages');
-                messagesContainer.innerHTML = ''; 
+                messagesContainer.innerHTML = ''; // Clear previous chat
+                
                 messagesRef = database.ref(`chats/${chatId}`);
                 
-                messagesListener = messagesRef.orderByChild('timestamp').on('value', (snapshot) => {
-                    messagesContainer.innerHTML = '';
-                    snapshot.forEach((childSnapshot) => {
-                        displayMessage(childSnapshot.key, childSnapshot.val());
-                    });
-                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                // Use 'child_added' for real-time performance instead of reloading everything
+                messagesListener = messagesRef.orderByChild('timestamp').limitToLast(100).on('child_added', (snapshot) => {
+                    displayMessage(snapshot.key, snapshot.val());
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 });
             }
 
