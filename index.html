@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -117,7 +118,7 @@
             font-weight: 500;
             font-size: 0.9rem;
         }
-        .auth-form input, .auth-form select {
+        .auth-form input, .auth-form select, .auth-form textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
@@ -265,7 +266,7 @@
         
         .profile-card.offline {
             opacity: 0.6;
-            filter: grayscale(50%);
+            filter: grayscale(80%);
         }
         
         .profile-card.offline .online-dot {
@@ -593,7 +594,7 @@
             50% { transform: translateY(-10px); }
         }
         
-        /* --- 💎 NEW: 3D GLASSY RECHARGE MODAL STYLES --- */
+        /* --- 💎 FIXED: 3D GLASSY RECHARGE MODAL STYLES --- */
         .recharge-modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -605,18 +606,15 @@
         .recharge-modal-overlay.active { display: flex; }
         
         .recharge-modal {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            background: rgba(40, 40, 40, 0.95); /* Dark background for readability */
+            backdrop-filter: blur(25px); 
             padding: 30px;
             border-radius: 24px;
             width: 90%; max-width: 380px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 
-                0 20px 50px rgba(0,0,0,0.3), 
-                inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             position: relative;
             transform-style: preserve-3d;
-            transform: rotateX(5deg);
             animation: floatModal 3s ease-in-out infinite alternate;
             color: #fff;
         }
@@ -640,64 +638,58 @@
         
         .recharge-plans-container {
             max-height: 50vh; overflow-y: auto;
-            padding: 5px;
-            display: flex; flex-direction: column; gap: 12px;
+            padding: 10px; /* Added padding */
+            display: flex; flex-direction: column; gap: 15px; /* Increased gap */
         }
         
-        /* Custom scrollbar for glass modal */
-        .recharge-plans-container::-webkit-scrollbar { width: 4px; }
-        .recharge-plans-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
-
+        /* FIXED: Payment Cards Styling */
         .recharge-plan {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
-            border: 1px solid rgba(255,255,255,0.2);
+            padding: 18px 20px;
+            background: rgba(255, 255, 255, 0.1); /* Visible card background */
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 16px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            position: relative; overflow: hidden;
+            transition: all 0.2s ease;
+            position: relative; 
+            overflow: hidden;
         }
         
-        .recharge-plan::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transform: translateX(-100%); transition: 0.5s;
+        .recharge-plan:active {
+            transform: scale(0.98);
         }
-        .recharge-plan:hover::before { transform: translateX(100%); }
-        
+
         .recharge-plan:hover {
-            transform: translateY(-5px) scale(1.02);
-            background: linear-gradient(135deg, rgba(233, 30, 99, 0.2), rgba(233, 30, 99, 0.1));
-            border-color: rgba(233, 30, 99, 0.5);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.2);
+            border-color: var(--primary-pink);
         }
 
         .plan-details { display: flex; flex-direction: column; }
-        .plan-details span { font-weight: 700; font-size: 1.1rem; color: #fff; }
+        .plan-details span { font-weight: 700; font-size: 1.2rem; color: #fff; }
         
         .plan-details .bonus {
-            font-size: 0.75rem; color: #69f0ae;
+            font-size: 0.8rem; color: #00e676; /* Bright Green */
             font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
-            margin-top: 2px;
+            margin-top: 4px;
         }
         
         .plan-price {
-            font-weight: 800; font-size: 1.2rem;
-            color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            background: rgba(255,255,255,0.1); padding: 5px 12px;
+            font-weight: 800; font-size: 1.3rem;
+            color: #fff; 
+            background: var(--primary-pink); 
+            padding: 8px 15px;
             border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(233, 30, 99, 0.3);
         }
         
         .close-modal-btn {
             position: absolute; top: 15px; right: 15px;
-            background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1); border: none;
             width: 30px; height: 30px; border-radius: 50%;
             color: white; font-size: 1.2rem; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s;
         }
-        .close-modal-btn:hover { background: rgba(244, 67, 54, 0.8); border-color: transparent; }
+        .close-modal-btn:hover { background: rgba(244, 67, 54, 0.8); }
 
         /* WHATSAPP BUTTON STYLE */
         .whatsapp-promo {
@@ -717,6 +709,70 @@
         .whatsapp-promo:active { transform: scale(0.98); }
         .whatsapp-promo strong { display: block; font-size: 0.95rem; margin-bottom: 2px; }
         .whatsapp-promo small { font-size: 0.8rem; opacity: 0.9; }
+
+        /* --- 📝 EDIT PROFILE & TOGGLE STYLES --- */
+        #edit-profile-screen {
+            justify-content: flex-start;
+            padding: 20px;
+            background-color: var(--light-bg);
+            overflow-y: auto;
+        }
+        
+        .edit-profile-container {
+            background-color: var(--content-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            margin-top: 20px;
+        }
+
+        .toggle-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 10px;
+        }
+        
+        .toggle-label {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        /* The Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider { background-color: var(--online-indicator); }
+        input:checked + .slider:before { transform: translateX(22px); }
 
     </style>
     
@@ -980,11 +1036,10 @@
         <div id="profile-screen" class="page">
             <header class="profile-header">
                 <div class="profile-picture-container">
-                    <img src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=800" alt="Profile Picture" class="profile-picture">
-                    <div class="upload-icon"><svg viewBox="0 0 24 24"><path d="M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z"></path></svg></div>
+                    <img id="profile-screen-img" src="https://via.placeholder.com/150" alt="Profile Picture" class="profile-picture">
                 </div>
                 <div class="profile-actions">
-                    <button class="profile-action-btn edit-profile-btn">Edit Profile</button>
+                    <button id="edit-profile-nav-btn" class="profile-action-btn edit-profile-btn">Edit Profile</button>
                     <button class="profile-action-btn add-balance-btn">Add Coins</button>
                 </div>
             </header>
@@ -998,6 +1053,43 @@
                 <li class="settings-item"><span>Contact Us</span><svg class="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
                 <li id="logout-btn" class="settings-item"><span>Logout</span></li>
             </ul>
+        </div>
+        
+        <!-- NEW: EDIT PROFILE SCREEN -->
+        <div id="edit-profile-screen" class="page">
+            <header class="app-header">
+                <button class="back-button" data-page="profile-screen">
+                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h1>Edit Profile</h1>
+            </header>
+            
+            <div class="edit-profile-container">
+                <!-- Online/Offline Toggle -->
+                <div class="toggle-container">
+                    <span class="toggle-label">Show Online Status</span>
+                    <label class="switch">
+                        <input type="checkbox" id="online-status-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <form id="edit-profile-form" class="auth-form">
+                    <div class="input-group">
+                        <label for="edit-name">Name</label>
+                        <input type="text" id="edit-name" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-age">Age</label>
+                        <input type="number" id="edit-age" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-about">About Me</label>
+                        <textarea id="edit-about" rows="3" placeholder="Tell something about yourself..."></textarea>
+                    </div>
+                    <button type="submit">Save Changes</button>
+                </form>
+            </div>
         </div>
         
         <!-- PAGE 4: CHAT LIST SCREEN -->
@@ -1154,6 +1246,12 @@
             const closeRechargeModalBtn = document.getElementById('close-recharge-modal-btn');
             const rechargePlansContainer = document.getElementById('recharge-plans-container');
             const homeProfileImg = document.getElementById('home-profile-img');
+            const profileScreenImg = document.getElementById('profile-screen-img');
+
+            // Edit Profile Elements
+            const editProfileNavBtn = document.getElementById('edit-profile-nav-btn');
+            const editProfileForm = document.getElementById('edit-profile-form');
+            const onlineStatusToggle = document.getElementById('online-status-toggle');
 
             const CLOUD_NAME = 'dtvrhjtt4';
             const UPLOAD_PRESET = 'Soul_Spark';
@@ -1218,7 +1316,7 @@
                     pageToShow.classList.add('active');
                 }
                 
-                const pagesWithoutNav = ['welcome-screen', 'auth-screen', 'chat-conversation-screen', 'call-screen'];
+                const pagesWithoutNav = ['welcome-screen', 'auth-screen', 'chat-conversation-screen', 'call-screen', 'edit-profile-screen'];
                 if (pagesWithoutNav.includes(pageId)) {
                     bottomNav.style.display = 'none';
                 } else {
@@ -1239,6 +1337,7 @@
                     listenForNewChats(user.uid);
                     listenForIncomingCalls(user.uid); 
                     fetchAllUsers();
+                    requestNotificationPermission(); // Request Notification Permission
                     showPage('home-screen'); 
                 } else {
                     currentUserId = null;
@@ -1258,6 +1357,7 @@
                         updateBalanceDisplay(currentUserCoins);
                         if(userData.profileImg) {
                             homeProfileImg.src = userData.profileImg;
+                            profileScreenImg.src = userData.profileImg;
                         }
                     }
                 });
@@ -1267,6 +1367,30 @@
             function updateBalanceDisplay(coins) {
                 userBalanceMinutesDisplay.textContent = `${coins} Coins`;
             }
+
+            // --- NOTIFICATION PERMISSION ---
+            function requestNotificationPermission() {
+                if (!("Notification" in window)) {
+                    console.log("This browser does not support desktop notification");
+                } else {
+                    Notification.requestPermission();
+                }
+            }
+
+            function showNotification(sender, message) {
+                if (Notification.permission === "granted" && document.visibilityState === "hidden") {
+                    const notification = new Notification(`New Message from ${sender}`, {
+                        body: message,
+                        icon: 'https://cdn-icons-png.flaticon.com/512/134/134914.png' // Generic icon
+                    });
+                    
+                    notification.onclick = function() {
+                        window.focus();
+                        notification.close();
+                    };
+                }
+            }
+
 
             // --- Event Listeners ---
             getStartedBtn.addEventListener('click', () => {
@@ -1355,6 +1479,8 @@
                             email: email,
                             profileImg: profileImg,
                             coins: 50, // Give new users 50 free coins
+                            isOnline: true,
+                            about: "Hey there! I am using Batkaro.",
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
                     })
@@ -1441,6 +1567,51 @@
                 }
             });
 
+            // --- EDIT PROFILE FUNCTIONALITY ---
+            editProfileNavBtn.addEventListener('click', async () => {
+                if(!currentUserId) return;
+                
+                // Load current data
+                try {
+                    const userDoc = await firestore.collection('users').doc(currentUserId).get();
+                    if(userDoc.exists) {
+                        const data = userDoc.data();
+                        document.getElementById('edit-name').value = data.name || '';
+                        document.getElementById('edit-age').value = data.age || '';
+                        document.getElementById('edit-about').value = data.about || '';
+                        onlineStatusToggle.checked = data.isOnline !== false; // Default true
+                    }
+                    showPage('edit-profile-screen');
+                } catch (e) {
+                    console.error("Error loading profile", e);
+                }
+            });
+
+            editProfileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if(!currentUserId) return;
+
+                const newName = document.getElementById('edit-name').value;
+                const newAge = document.getElementById('edit-age').value;
+                const newAbout = document.getElementById('edit-about').value;
+                const isOnline = onlineStatusToggle.checked;
+
+                try {
+                    await firestore.collection('users').doc(currentUserId).update({
+                        name: newName,
+                        age: newAge,
+                        about: newAbout,
+                        isOnline: isOnline
+                    });
+                    alert("Profile updated successfully!");
+                    showPage('profile-screen');
+                } catch (error) {
+                    console.error("Error updating profile:", error);
+                    alert("Failed to update profile.");
+                }
+            });
+
+
             // --- RECHARGE MODAL LOGIC (UPDATED FOR PAYMENT) ---
             function showRechargeModal() {
                 generateRechargePlans();
@@ -1476,7 +1647,7 @@
                         <span>${totalCoins} Coins</span>`;
 
                     if (plan.bonusCoins > 0) {
-                        detailsHTML += `<p class="bonus">+${plan.bonusCoins} Coins Bonus!</p>`;
+                        detailsHTML += `<p class="bonus">+${plan.bonusCoins} Bonus!</p>`;
                     }
                     detailsHTML += `</div>`;
 
@@ -1660,8 +1831,14 @@
                 
                 // Use 'child_added' for real-time performance instead of reloading everything
                 messagesListener = messagesRef.orderByChild('timestamp').limitToLast(100).on('child_added', (snapshot) => {
-                    displayMessage(snapshot.key, snapshot.val());
+                    const message = snapshot.val();
+                    displayMessage(snapshot.key, message);
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    
+                    // Show Notification if message is from other user and document is hidden
+                    if (message.senderId !== currentUserId) {
+                        showNotification(document.querySelector('.chat-header-info .name').textContent || "New Message", message.text);
+                    }
                 });
             }
 
@@ -1783,6 +1960,10 @@
                 users.forEach(user => {
                     const profileCard = document.createElement('div');
                     profileCard.className = 'profile-card';
+                    // Check online status (default to online if undefined for older users)
+                    if (user.isOnline === false) {
+                        profileCard.classList.add('offline');
+                    }
                     profileCard.dataset.profileUid = user.uid;
 
                     profileCard.innerHTML = `
