@@ -774,6 +774,20 @@
         input:checked + .slider { background-color: var(--online-indicator); }
         input:checked + .slider:before { transform: translateX(22px); }
 
+        /* --- 📄 LEGAL PAGES STYLE --- */
+        .legal-content {
+            padding: 20px;
+            background-color: var(--content-bg);
+            border-radius: 15px;
+            margin: 20px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+        }
+        .legal-content h2 { color: var(--primary-pink); margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .legal-content h3 { font-size: 1.1rem; margin-top: 15px; margin-bottom: 8px; color: var(--text-color); }
+        .legal-content p, .legal-content li { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px; }
+        .legal-content ul { padding-left: 20px; }
+        .contact-link { color: var(--primary-blue); font-weight: 600; text-decoration: none; }
+
     </style>
     
     <!-- New Welcome Screen Dependencies -->
@@ -1045,12 +1059,12 @@
             </header>
             <ul class="settings-list">
                  <li class="settings-item"><span>Transaction</span><svg class="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
-                <li class="settings-item"><span>Change Language</span><svg class="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
+                 <!-- Change Language Removed -->
                 <li class="settings-item"><span>Rate Us</span><svg class="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
                 <li class="settings-item"><span>Share App</span><svg class="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
-                <li class="settings-item"><span>Privacy Policy</span><svg class="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
-                <li class="settings-item"><span>Term and Condition</span><svg class="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
-                <li class="settings-item"><span>Contact Us</span><svg class="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
+                <li id="btn-privacy" class="settings-item"><span>Privacy Policy</span><svg class="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
+                <li id="btn-terms" class="settings-item"><span>Term and Condition</span><svg class="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
+                <li id="btn-contact" class="settings-item"><span>Contact Us</span><svg class="chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></li>
                 <li id="logout-btn" class="settings-item"><span>Logout</span></li>
             </ul>
         </div>
@@ -1089,6 +1103,101 @@
                     </div>
                     <button type="submit">Save Changes</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- NEW: PRIVACY POLICY SCREEN -->
+        <div id="privacy-screen" class="page">
+            <header class="app-header">
+                <button class="back-button" data-page="profile-screen">
+                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h1>Privacy Policy</h1>
+            </header>
+            <div class="legal-content">
+                <h2>Privacy Policy</h2>
+                <p>Welcome to Batkaro. Your privacy is critically important to us. This Privacy Policy explains how we collect, use, and share your personal information when you use our services.</p>
+                
+                <h3>1. Information We Collect</h3>
+                <ul>
+                    <li><strong>Account Information:</strong> When you sign up, we collect your Name, Email, Age, Gender, and Profile Picture to create your unique identity.</li>
+                    <li><strong>Usage Data:</strong> We may collect data about your interactions with other users, call duration, and transaction history.</li>
+                    <li><strong>Device Permissions:</strong> We require access to your Camera and Microphone to facilitate Video and Audio calling features. This data is transmitted in real-time and is not stored permanently on our servers.</li>
+                </ul>
+
+                <h3>2. How We Use Your Information</h3>
+                <p>We use your data to:</p>
+                <ul>
+                    <li>Facilitate connections between users.</li>
+                    <li>Process payments via Razorpay for Coin purchases.</li>
+                    <li>Improve app stability and user experience.</li>
+                    <li>Prevent fraud and ensure community safety.</li>
+                </ul>
+
+                <h3>3. Data Storage and Security</h3>
+                <p>We use Firebase (Google) services for secure data storage and authentication. While we implement strong security measures, no method of transmission over the internet is 100% secure.</p>
+
+                <h3>4. Payments</h3>
+                <p>All financial transactions are processed through Razorpay. We do not store your credit card or banking details on our servers.</p>
+
+                <h3>5. Contact Us</h3>
+                <p>If you have questions about this Privacy Policy, please contact us at: <a href="mailto:udbhavscience12@gmail.com" class="contact-link">udbhavscience12@gmail.com</a></p>
+            </div>
+        </div>
+
+        <!-- NEW: TERMS AND CONDITIONS SCREEN -->
+        <div id="terms-screen" class="page">
+            <header class="app-header">
+                <button class="back-button" data-page="profile-screen">
+                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h1>Terms & Conditions</h1>
+            </header>
+            <div class="legal-content">
+                <h2>Terms and Conditions</h2>
+                <p>By downloading or using the Batkaro app, these terms will automatically apply to you.</p>
+
+                <h3>1. User Eligibility</h3>
+                <p>You must be at least 18 years of age to use Batkaro. By using the app, you confirm that you meet this age requirement.</p>
+
+                <h3>2. User Conduct</h3>
+                <p>You agree not to:</p>
+                <ul>
+                    <li>Harass, abuse, or threaten other users.</li>
+                    <li>Share illegal, explicit, or offensive content.</li>
+                    <li>Use the app for any fraudulent activity.</li>
+                </ul>
+                <p>Violation of these rules will result in immediate account suspension without refund.</p>
+
+                <h3>3. Virtual Currency (Coins)</h3>
+                <p>Batkaro uses "Coins" as a virtual currency for calls and chats. Coins have no real-world monetary value and cannot be exchanged for cash. All purchases are final and non-refundable.</p>
+
+                <h3>4. Liability</h3>
+                <p>Batkaro is a platform for social interaction. We are not responsible for the behavior of users offline or outside the platform. Please use caution when sharing personal information.</p>
+
+                <h3>5. Changes to Terms</h3>
+                <p>We reserve the right to update these terms at any time. Continued use of the app implies acceptance of the new terms.</p>
+            </div>
+        </div>
+
+        <!-- NEW: CONTACT US SCREEN -->
+        <div id="contact-screen" class="page">
+            <header class="app-header">
+                <button class="back-button" data-page="profile-screen">
+                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h1>Contact Us</h1>
+            </header>
+            <div class="legal-content">
+                <h2>Get in Touch</h2>
+                <p>We are here to help you. If you are facing any issues with the app, payments, or have any feedback, please reach out to us.</p>
+                
+                <h3>Support Email</h3>
+                <p>You can email us directly at:</p>
+                <p><a href="mailto:udbhavscience12@gmail.com" class="contact-link" style="font-size: 1.1rem;">udbhavscience12@gmail.com</a></p>
+                
+                <h3>Response Time</h3>
+                <p>We typically respond within 24-48 hours.</p>
             </div>
         </div>
         
@@ -1316,7 +1425,8 @@
                     pageToShow.classList.add('active');
                 }
                 
-                const pagesWithoutNav = ['welcome-screen', 'auth-screen', 'chat-conversation-screen', 'call-screen', 'edit-profile-screen'];
+                // Add new legal pages to the list of pages without bottom nav
+                const pagesWithoutNav = ['welcome-screen', 'auth-screen', 'chat-conversation-screen', 'call-screen', 'edit-profile-screen', 'privacy-screen', 'terms-screen', 'contact-screen'];
                 if (pagesWithoutNav.includes(pageId)) {
                     bottomNav.style.display = 'none';
                 } else {
@@ -1406,6 +1516,17 @@
                 signinForm.classList.add('hidden');
                 signupForm.classList.remove('hidden');
             });
+
+            // --- NEW: Legal Pages Navigation ---
+            const openLegalPage = (btnId, pageId) => {
+                const btn = document.getElementById(btnId);
+                if(btn) {
+                    btn.addEventListener('click', () => { showPage(pageId); });
+                }
+            };
+            openLegalPage('btn-privacy', 'privacy-screen');
+            openLegalPage('btn-terms', 'terms-screen');
+            openLegalPage('btn-contact', 'contact-screen');
             
             // Cloudinary Image Upload Function
             async function uploadImageToCloudinary(file) {
