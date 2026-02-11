@@ -1389,6 +1389,7 @@
             // CHANGE: Added variable to track current camera facing mode
             let currentFacingMode = 'user'; // 'user' for front, 'environment' for back
             let activeCallInterval = null;
+            let activeChatInterval = null; // NEW: Timer for chat billing
             
             const servers = {
                 iceServers: [
@@ -1419,6 +1420,11 @@
 
             // --- Page Navigation (Simplified) ---
             const showPage = (pageId) => {
+                // NEW: Stop chat billing timer if navigating away from chat
+                if (document.getElementById('chat-conversation-screen').classList.contains('active') && pageId !== 'chat-conversation-screen') {
+                    stopChatTimer();
+                }
+                
                 pages.forEach(page => page.classList.remove('active'));
                 const pageToShow = document.getElementById(pageId);
                 if (pageToShow) {
@@ -1642,11 +1648,7 @@
                 const chatBtn = e.target.closest('.chat-btn');
                 if (chatBtn) {
                      if (!currentUserId) { alert("Please sign in to chat."); return; }
-                     // Check coins for chat
-                     if (currentUserCoins < COST_CHAT_PER_MIN) {
-                         showRechargeModal();
-                         return;
-                     }
+                     // Coin check is now inside openChat
                     openChat(chatBtn.dataset.profileUid, chatBtn.dataset.profileName, chatBtn.dataset.profileImg);
                 }
 
@@ -1654,10 +1656,7 @@
                 const voiceBtn = e.target.closest('.voice-btn');
                 if (voiceBtn) {
                      if (!currentUserId) { alert("Please sign in to call."); return; }
-                     if (currentUserCoins < COST_VOICE_PER_MIN) {
-                         showRechargeModal();
-                         return;
-                     }
+                     // Coin check is now inside startCall
                      const profileCard = voiceBtn.closest('.profile-card');
                      const uid = profileCard.dataset.profileUid;
                      if(uid) startCall(uid, false); // false = Audio Only
@@ -1667,10 +1666,7 @@
                 const videoBtn = e.target.closest('.video-btn');
                 if (videoBtn) {
                      if (!currentUserId) { alert("Please sign in to call."); return; }
-                     if (currentUserCoins < COST_VIDEO_PER_MIN) {
-                         showRechargeModal();
-                         return;
-                     }
+                     // Coin check is now inside startCall
                      const profileCard = videoBtn.closest('.profile-card');
                      const uid = profileCard.dataset.profileUid;
                      if(uid) startCall(uid, true); // true = Video Call
@@ -1874,14 +1870,19 @@
                 }
             }
             
+            // --- MODIFIED BILLING FUNCTIONS ---
+
             // Function to deduct coins periodically during a call
-            function startDeductionTimer(costPerMinute) {
+            function startCallTimer(costPerMinute) {
                 if(activeCallInterval) clearInterval(activeCallInterval);
                 
+                // This interval now handles deductions from the SECOND minute onwards
                 activeCallInterval = setInterval(async () => {
-                    if(!currentUserId) return;
+                    if(!currentUserId) {
+                        stopCallTimer();
+                        return;
+                    }
                     
-                    // Client side check to stop if funds run out
                     if (currentUserCoins < costPerMinute) {
                          endCall();
                          alert("Call ended: Insufficient coins.");
@@ -1891,18 +1892,28 @@
                     try {
                         const userRef = firestore.collection('users').doc(currentUserId);
                         await userRef.update({
-                            coins: firebase.firestore.FieldValue.increment(-costPerMinute) // Deduct 1 minute worth
+                            coins: firebase.firestore.FieldValue.increment(-costPerMinute)
                         });
                     } catch (e) {
                         console.error("Deduction error", e);
+                        endCall(); // End call if deduction fails
                     }
                 }, 60000); // Run every 60 seconds
             }
             
-            function stopDeductionTimer() {
+            function stopCallTimer() {
                 if(activeCallInterval) {
                     clearInterval(activeCallInterval);
                     activeCallInterval = null;
+                }
+            }
+            
+            // NEW: Function to stop the chat billing timer
+            function stopChatTimer() {
+                if(activeChatInterval) {
+                    clearInterval(activeChatInterval);
+                    activeChatInterval = null;
+                    console.log("Chat billing stopped.");
                 }
             }
 
@@ -1923,8 +1934,47 @@
                 });
             }
 
-            function openChat(otherUserId, name, img) {
+            async function openChat(otherUserId, name, img) {
                 if (!currentUserId || !otherUserId) return;
+
+                // --- NEW CHAT BILLING LOGIC ---
+                if (currentUserCoins < COST_CHAT_PER_MIN) {
+                    alert("You need at least " + COST_CHAT_PER_MIN + " coins to start chatting. Please recharge.");
+                    showRechargeModal();
+                    return;
+                }
+                
+                stopChatTimer(); // Stop any previous timer just in case
+
+                try {
+                    const userRef = firestore.collection('users').doc(currentUserId);
+                    // Initial deduction for the first minute
+                    await userRef.update({
+                        coins: firebase.firestore.FieldValue.increment(-COST_CHAT_PER_MIN)
+                    });
+
+                    // Start timer for subsequent minutes
+                    activeChatInterval = setInterval(async () => {
+                        if (currentUserCoins < COST_CHAT_PER_MIN) {
+                            stopChatTimer();
+                            alert("Chat ended due to insufficient coins. Please recharge to continue.");
+                            showPage('home-screen'); // Navigate away from chat
+                            showRechargeModal();
+                            return;
+                        }
+                        await userRef.update({
+                            coins: firebase.firestore.FieldValue.increment(-COST_CHAT_PER_MIN)
+                        });
+                    }, 60000); // Deduct every 60 seconds
+
+                    console.log("Chat billing started.");
+                } catch (error) {
+                    console.error("Error starting chat billing:", error);
+                    alert("A billing error occurred. Please try again.");
+                    return; // Don't open chat if initial billing fails
+                }
+                // --- END NEW CHAT BILLING LOGIC ---
+
                 const ids = [currentUserId, otherUserId].sort();
                 currentChatId = ids.join('_');
                 currentOpenChatOtherUserId = otherUserId;
@@ -1990,8 +2040,8 @@
                 const messageText = chatInput.value.trim();
                 if (messageText === '' || !currentChatId || !currentUserId) return;
 
-                if (currentUserCoins < 1) { 
-                     alert("Low balance! Please recharge to chat.");
+                if (currentUserCoins < 1) { // A small check before sending
+                     alert("Low balance! Please recharge to continue chatting.");
                      showRechargeModal();
                      return;
                 }
@@ -2188,10 +2238,36 @@
             switchCameraBtn.addEventListener('click', switchCamera);
 
             async function startCall(receiverUid, isVideo) {
+                const costPerMinute = isVideo ? COST_VIDEO_PER_MIN : COST_VOICE_PER_MIN;
+
+                // NEW: Initial Coin Check
+                if (currentUserCoins < costPerMinute) {
+                    alert("You need at least " + costPerMinute + " coins for this call. Please recharge.");
+                    showRechargeModal();
+                    return;
+                }
+                
                 await setupLocalMedia(isVideo);
                 if(!localStream) return;
                 
-                startDeductionTimer(isVideo ? COST_VIDEO_PER_MIN : COST_VOICE_PER_MIN);
+                // NEW: Initial Deduction for the first minute
+                try {
+                     const userRef = firestore.collection('users').doc(currentUserId);
+                     await userRef.update({
+                         coins: firebase.firestore.FieldValue.increment(-costPerMinute)
+                     });
+                } catch(e) {
+                    console.error("Initial call deduction failed:", e);
+                    alert("A billing error occurred. Call could not be started.");
+                    if (localStream) {
+                        localStream.getTracks().forEach(track => track.stop());
+                        localStream = null;
+                    }
+                    return;
+                }
+                
+                // Start the timer for subsequent minutes (2nd minute onwards)
+                startCallTimer(costPerMinute);
 
                 showPage('call-screen');
 
@@ -2323,7 +2399,7 @@
             });
 
             function endCall() {
-                stopDeductionTimer(); // Stop charging
+                stopCallTimer(); // Stop charging
                 
                 if (peerConnection) {
                     peerConnection.close();
