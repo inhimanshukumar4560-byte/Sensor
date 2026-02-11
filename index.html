@@ -29,6 +29,9 @@
             --online-indicator: #4CAF50; /* Green for online status */
             --danger-red: #f44336;
             --seen-blue: #34B7F1; /* Blue color for seen ticks */
+            /* NEW: Colors for Gold and Silver Coins */
+            --gold-coin: #FFD700;
+            --silver-coin: #C0C0C0;
         }
 
         * {
@@ -202,8 +205,30 @@
         }
         .app-logo-home { font-size: 1.5rem; font-weight: 700; color: var(--primary-pink); }
         .header-actions { display: flex; align-items: center; gap: 10px; }
-        .balance-display { background: #f0f0f0; padding: 5px 10px; border-radius: 20px; font-weight: 500; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
+        
+        /* MODIFIED: Balance display for two coin types */
+        .balance-container {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        .balance-display {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
         .balance-display .coin-icon { width: 18px; height: 18px; }
+        .balance-separator {
+            width: 1px;
+            height: 16px;
+            background-color: #ccc;
+        }
+
         .header-profile-icon img { width: 32px; height: 32px; border-radius: 50%; }
 
         .home-content {
@@ -422,7 +447,7 @@
 
 
         /* --- 💬 CHAT PAGES --- */
-        .app-header { display: flex; align-items: center; padding: 10px 15px; background-color: var(--content-bg); box-shadow: 0 2px 4px var(--shadow-color); flex-shrink: 0; }
+        .app-header { display: flex; align-items: center; padding: 10px 15px; background-color: var(--content-bg); box-shadow: 0 2px 4px var(--shadow-color); flex-shrink: 0; z-index: 5; }
         .back-button { background: none; border: none; cursor: pointer; margin-right: 10px; padding: 5px; }
         .back-button svg { width: 24px; height: 24px; color: var(--text-color); }
 
@@ -594,121 +619,164 @@
             50% { transform: translateY(-10px); }
         }
         
-        /* --- 💎 FIXED: 3D GLASSY RECHARGE MODAL STYLES --- */
-        .recharge-modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(10, 10, 15, 0.7);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            display: none; justify-content: center; align-items: center;
-            z-index: 3000; perspective: 1000px;
-        }
-        .recharge-modal-overlay.active { display: flex; }
-        
-        .recharge-modal {
-            background: rgba(40, 40, 40, 0.95); /* Dark background for readability */
-            backdrop-filter: blur(25px); 
-            padding: 30px;
-            border-radius: 24px;
-            width: 90%; max-width: 380px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            position: relative;
-            transform-style: preserve-3d;
-            animation: floatModal 3s ease-in-out infinite alternate;
-            color: #fff;
-        }
-        
-        @keyframes floatModal {
-            0% { transform: translateY(0) rotateX(2deg); }
-            100% { transform: translateY(-10px) rotateX(5deg); }
+        /* --- 💎 MODIFIED: RECHARGE STORE PAGE STYLES --- */
+        #recharge-screen {
+            background-color: #f0f2f5;
+            justify-content: flex-start;
         }
 
-        .recharge-modal h3 {
-            text-align: center; margin-bottom: 5px;
-            font-size: 1.8rem; font-weight: 800;
-            background: linear-gradient(to right, #fff, #f8bbd0);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            text-shadow: 0 4px 10px rgba(233, 30, 99, 0.4);
-        }
-        .recharge-modal p {
-            text-align: center; margin-bottom: 20px;
-            color: rgba(255,255,255,0.8); font-size: 0.95rem;
+        .store-content {
+            padding: 20px 15px 90px 15px; /* Padding for nav bar */
+            width: 100%;
+            overflow-y: auto;
         }
         
+        .store-section {
+            margin-bottom: 30px;
+        }
+
+        .store-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .store-section-header {
+            margin-bottom: 20px;
+            padding-left: 5px;
+        }
+        .store-section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .store-section-header .coin-icon {
+            width: 24px;
+            height: 24px;
+        }
+        .store-section-header p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
         .recharge-plans-container {
-            max-height: 50vh; overflow-y: auto;
-            padding: 10px; /* Added padding */
-            display: flex; flex-direction: column; gap: 15px; /* Increased gap */
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
         }
-        
-        /* FIXED: Payment Cards Styling */
+
         .recharge-plan {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 18px 20px;
-            background: rgba(255, 255, 255, 0.1); /* Visible card background */
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
+            background-color: var(--content-bg);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: 2px solid transparent;
             cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative; 
+            transition: all 0.3s ease;
+            position: relative;
             overflow: hidden;
         }
-        
-        .recharge-plan:active {
-            transform: scale(0.98);
-        }
 
-        .recharge-plan:hover {
-            background: rgba(255, 255, 255, 0.2);
+        .recharge-plan:hover, .recharge-plan.best-value {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(233, 30, 99, 0.15);
             border-color: var(--primary-pink);
         }
-
-        .plan-details { display: flex; flex-direction: column; }
-        .plan-details span { font-weight: 700; font-size: 1.2rem; color: #fff; }
         
+        .plan-tag {
+            position: absolute;
+            top: 10px;
+            right: -30px;
+            background-color: var(--primary-pink);
+            color: white;
+            padding: 4px 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transform: rotate(45deg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .plan-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .plan-icon {
+            background-color: #fce4ec; /* Light pink */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .plan-icon svg {
+            width: 28px;
+            height: 28px;
+            fill: var(--primary-pink);
+        }
+
+        .plan-details .coins {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
         .plan-details .bonus {
-            font-size: 0.8rem; color: #00e676; /* Bright Green */
-            font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
-            margin-top: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--online-indicator);
         }
-        
-        .plan-price {
-            font-weight: 800; font-size: 1.3rem;
-            color: #fff; 
-            background: var(--primary-pink); 
-            padding: 8px 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(233, 30, 99, 0.3);
-        }
-        
-        .close-modal-btn {
-            position: absolute; top: 15px; right: 15px;
-            background: rgba(255,255,255,0.1); border: none;
-            width: 30px; height: 30px; border-radius: 50%;
-            color: white; font-size: 1.2rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .close-modal-btn:hover { background: rgba(244, 67, 54, 0.8); }
 
-        /* WHATSAPP BUTTON STYLE */
-        .whatsapp-promo {
-            margin-top: 15px;
-            background: linear-gradient(135deg, #25D366, #128C7E);
-            padding: 12px;
+        .plan-price {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-pink);
+            background-color: #fce4ec;
+            padding: 8px 12px;
+            border-radius: 20px;
+        }
+        
+        /* NEW: TELEGRAM BUTTON STYLE */
+        .telegram-support-card {
+            margin-top: 25px;
+            background: linear-gradient(135deg, #38A5E0, #2A7CB4);
+            padding: 20px;
             border-radius: 12px;
             color: white;
             text-align: center;
             cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.3);
-            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
             text-decoration: none;
-            display: block;
-            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 20px rgba(56, 165, 224, 0.4);
+            transition: transform 0.2s ease;
         }
-        .whatsapp-promo:active { transform: scale(0.98); }
-        .whatsapp-promo strong { display: block; font-size: 0.95rem; margin-bottom: 2px; }
-        .whatsapp-promo small { font-size: 0.8rem; opacity: 0.9; }
+        .telegram-support-card:active {
+            transform: scale(0.98);
+        }
+        .telegram-support-card strong {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .telegram-support-card small {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+        .telegram-icon {
+             width: 30px; height: 30px; fill: white;
+        }
+
 
         /* --- 📝 EDIT PROFILE & TOGGLE STYLES --- */
         #edit-profile-screen {
@@ -1020,9 +1088,17 @@
             <header class="page-header">
                 <h1 class="app-logo-home">Batkaro</h1>
                 <div class="header-actions">
-                    <div class="balance-display">
-                        <svg class="coin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#fbc02d" d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2Zm1.6,15.55h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2V8.45h3.2v4.42Z"/></svg>
-                        <span id="user-balance-minutes">0 Coins</span>
+                    <!-- MODIFIED: Container for two coin types -->
+                    <div class="balance-container">
+                        <div class="balance-display">
+                            <svg class="coin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#C0C0C0" d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2Zm1.6,15.55h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2V8.45h3.2v4.42Z"/></svg>
+                            <span id="user-balance-silver">0</span>
+                        </div>
+                        <div class="balance-separator"></div>
+                        <div class="balance-display">
+                           <svg class="coin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#FFD700" d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2Zm1.6,15.55h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2V8.45h3.2v4.42Z"/></svg>
+                            <span id="user-balance-gold">0</span>
+                        </div>
                     </div>
                     <div class="header-profile-icon">
                         <img id="home-profile-img" src="https://via.placeholder.com/100" alt="My Profile">
@@ -1033,7 +1109,7 @@
                 <div class="random-call-card">
                     <div class="text">
                         <h3>Connect & Make Friends</h3>
-                        <p>@ 4 coins/min only!</p>
+                        <p>Voice calls with new people!</p>
                     </div>
                     <button class="random-call-btn">Random Call</button>
                 </div>
@@ -1170,7 +1246,7 @@
                 <p>Violation of these rules will result in immediate account suspension without refund.</p>
 
                 <h3>3. Virtual Currency (Coins)</h3>
-                <p>Batkaro uses "Coins" as a virtual currency for calls and chats. Coins have no real-world monetary value and cannot be exchanged for cash. All purchases are final and non-refundable.</p>
+                <p>Batkaro uses "Gold Coins" and "Silver Coins" as virtual currency. Coins have no real-world monetary value and cannot be exchanged for cash. All purchases are final and non-refundable.</p>
 
                 <h3>4. Liability</h3>
                 <p>Batkaro is a platform for social interaction. We are not responsible for the behavior of users offline or outside the platform. Please use caution when sharing personal information.</p>
@@ -1231,7 +1307,7 @@
                 <!-- Messages will be loaded from Firebase here -->
             </main>
             <footer class="chat-input-area">
-                <input id="chat-input-field" type="text" placeholder="Type a message... (2 Coins/min)">
+                <input id="chat-input-field" type="text" placeholder="Type a message... (2 Silver Coins/min)">
                 <button id="send-message-btn" class="send-btn"><svg viewBox="0 0 24 24"><path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"></path></svg></button>
             </footer>
         </div>
@@ -1265,6 +1341,52 @@
                 </button>
             </div>
         </div>
+        
+        <!-- NEW: RECHARGE STORE PAGE -->
+        <div id="recharge-screen" class="page">
+             <header class="app-header">
+                <button class="back-button" data-page="profile-screen">
+                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                </button>
+                <h1>Store</h1>
+            </header>
+            <div class="store-content">
+                <!-- Gold Coins Section -->
+                <div class="store-section">
+                    <div class="store-section-header">
+                        <h2>
+                           <svg class="coin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#FFD700" d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2Zm1.6,15.55h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2V8.45h3.2v4.42Z"/></svg>
+                            Gold Coins
+                        </h2>
+                        <p>For high-quality Video Calls</p>
+                    </div>
+                    <div id="recharge-plans-gold" class="recharge-plans-container">
+                        <!-- Gold recharge plans will be dynamically inserted here -->
+                    </div>
+                </div>
+
+                <!-- Silver Coins Section -->
+                <div class="store-section">
+                     <div class="store-section-header">
+                        <h2>
+                             <svg class="coin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#C0C0C0" d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2Zm1.6,15.55h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2V8.45h3.2v4.42Z"/></svg>
+                            Silver Coins
+                        </h2>
+                        <p>For Voice Calls and Chatting</p>
+                    </div>
+                    <div id="recharge-plans-silver" class="recharge-plans-container">
+                        <!-- Silver recharge plans will be dynamically inserted here -->
+                    </div>
+                </div>
+
+                 <a id="telegram-support-btn" href="https://t.me/Himversa7" target="_blank" class="telegram-support-card">
+                    <svg class="telegram-icon" viewBox="0 0 24 24"><path d="M9.78,18.65L10.26,14.21L18.73,7.45C19.19,7.08 18.83,6.37 18.29,6.5L3.3,12.41C2.69,12.64 2.68,13.54 3.28,13.79L8.03,15.75L15.34,9.41C15.68,9.15 16.13,9.45 15.89,9.75L9.78,18.65Z"></path></svg>
+                    <strong>Need Help? DM on Telegram</strong>
+                    <small>Contact @Himversa7 for payment support & offers</small>
+                </a>
+            </div>
+        </div>
+
 
         <!-- INCOMING CALL MODAL -->
         <div id="incoming-call-modal">
@@ -1279,19 +1401,6 @@
                 </button>
             </div>
         </div>
-        
-        <!-- NEW: 3D GLASSY RECHARGE MODAL -->
-        <div id="recharge-modal-overlay" class="recharge-modal-overlay">
-            <div class="recharge-modal">
-                <button id="close-recharge-modal-btn" class="close-modal-btn">&times;</button>
-                <h3>Get More Coins!</h3>
-                <p>Top up to continue your conversations.</p>
-                <div id="recharge-plans-container" class="recharge-plans-container">
-                    <!-- Recharge plans will be dynamically inserted here -->
-                </div>
-            </div>
-        </div>
-
 
         <!-- REGULAR USER BOTTOM NAVIGATION BAR -->
         <nav class="bottom-nav">
@@ -1308,6 +1417,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-firestore.js"></script>
+    <!-- NEW: Firebase Cloud Messaging SDK for Push Notifications -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-messaging.js"></script>
+
 
     <script>
         // Your web app's Firebase configuration
@@ -1342,20 +1454,21 @@
             const showSignupLink = document.getElementById('show-signup-link');
             const logoutBtn = document.getElementById('logout-btn');
 
-            // *** NEW: Cloudinary and Image Upload Elements ***
+            // Cloudinary and Image Upload Elements
             const signupImageInput = document.getElementById('signup-image');
             const imagePreview = document.getElementById('image-preview');
             const signupImageUrlInput = document.getElementById('signup-image-url');
             const uploadStatus = document.getElementById('upload-status');
             const signupButton = signupForm.querySelector('button[type="submit"]');
             
-            // NEW: Balance and Recharge Elements
-            const userBalanceMinutesDisplay = document.getElementById('user-balance-minutes');
-            const rechargeModalOverlay = document.getElementById('recharge-modal-overlay');
-            const closeRechargeModalBtn = document.getElementById('close-recharge-modal-btn');
-            const rechargePlansContainer = document.getElementById('recharge-plans-container');
+            // Balance and Recharge Elements
+            const userBalanceSilverDisplay = document.getElementById('user-balance-silver');
+            const userBalanceGoldDisplay = document.getElementById('user-balance-gold');
+            const goldRechargePlansContainer = document.getElementById('recharge-plans-gold');
+            const silverRechargePlansContainer = document.getElementById('recharge-plans-silver');
             const homeProfileImg = document.getElementById('home-profile-img');
             const profileScreenImg = document.getElementById('profile-screen-img');
+
 
             // Edit Profile Elements
             const editProfileNavBtn = document.getElementById('edit-profile-nav-btn');
@@ -1368,28 +1481,29 @@
 
             let currentChatId = null;
             let currentUserId = null; 
-            let currentUserCoins = 0; // NEW: State for user's coin balance
+            // MODIFIED: Separate coin balances
+            let currentUserSilverCoins = 0;
+            let currentUserGoldCoins = 0;
             let currentOpenChatOtherUserId = null; 
 
-            // Costs constants
-            const COST_CHAT_PER_MIN = 2;
-            const COST_VOICE_PER_MIN = 4;
-            const COST_VIDEO_PER_MIN = 10;
+            // MODIFIED: Costs constants updated for clarity
+            const COST_CHAT_PER_MIN = 2;    // Silver Coins
+            const COST_VOICE_PER_MIN = 3;   // Silver Coins
+            const COST_VIDEO_PER_MIN = 10;  // Gold Coins
 
             let messagesRef = null;
             let messagesListener = null;
             let chatListListener = null;
             
-            // --- WEBRTC Variables ---
+            // WEBRTC Variables
             let localStream = null;
             let remoteStream = null;
             let peerConnection = null;
             let currentCallId = null;
             let callRef = null;
-            // CHANGE: Added variable to track current camera facing mode
-            let currentFacingMode = 'user'; // 'user' for front, 'environment' for back
+            let currentFacingMode = 'user';
             let activeCallInterval = null;
-            let activeChatInterval = null; // NEW: Timer for chat billing
+            let activeChatInterval = null; 
             
             const servers = {
                 iceServers: [
@@ -1410,7 +1524,6 @@
             const rejectCallBtn = document.getElementById('reject-call-btn');
             const incomingCallerName = document.getElementById('incoming-caller-name');
             const incomingCallerImg = document.getElementById('incoming-caller-img');
-            // CHANGE: Added a reference to the new switch camera button
             const switchCameraBtn = document.getElementById('switchCameraBtn');
             
             // --- Mock DB for active chats (will be replaced by Firebase listener) ---
@@ -1420,7 +1533,6 @@
 
             // --- Page Navigation (Simplified) ---
             const showPage = (pageId) => {
-                // NEW: Stop chat billing timer if navigating away from chat
                 if (document.getElementById('chat-conversation-screen').classList.contains('active') && pageId !== 'chat-conversation-screen') {
                     stopChatTimer();
                 }
@@ -1431,8 +1543,7 @@
                     pageToShow.classList.add('active');
                 }
                 
-                // Add new legal pages to the list of pages without bottom nav
-                const pagesWithoutNav = ['welcome-screen', 'auth-screen', 'chat-conversation-screen', 'call-screen', 'edit-profile-screen', 'privacy-screen', 'terms-screen', 'contact-screen'];
+                const pagesWithoutNav = ['welcome-screen', 'auth-screen', 'chat-conversation-screen', 'call-screen', 'edit-profile-screen', 'privacy-screen', 'terms-screen', 'contact-screen', 'recharge-screen'];
                 if (pagesWithoutNav.includes(pageId)) {
                     bottomNav.style.display = 'none';
                 } else {
@@ -1449,11 +1560,11 @@
             auth.onAuthStateChanged(user => {
                 if (user) {
                     currentUserId = user.uid;
-                    listenForUserData(user.uid); // Listen for user data including coins
+                    listenForUserData(user.uid);
                     listenForNewChats(user.uid);
                     listenForIncomingCalls(user.uid); 
                     fetchAllUsers();
-                    requestNotificationPermission(); // Request Notification Permission
+                    setupPushNotifications(); // NEW: Setup push notifications on login
                     showPage('home-screen'); 
                 } else {
                     currentUserId = null;
@@ -1464,13 +1575,14 @@
                 }
             });
 
-            // Listen for user data from Firestore (Changed 'minutes' to 'coins')
+            // MODIFIED: Listen for user data from Firestore with both coin types
             function listenForUserData(uid) {
                 firestore.collection('users').doc(uid).onSnapshot(doc => {
                     if (doc.exists) {
                         const userData = doc.data();
-                        currentUserCoins = userData.coins || 0; // Use 'coins'
-                        updateBalanceDisplay(currentUserCoins);
+                        currentUserSilverCoins = userData.silverCoins || 0;
+                        currentUserGoldCoins = userData.goldCoins || 0;
+                        updateBalanceDisplay(currentUserSilverCoins, currentUserGoldCoins);
                         if(userData.profileImg) {
                             homeProfileImg.src = userData.profileImg;
                             profileScreenImg.src = userData.profileImg;
@@ -1479,31 +1591,69 @@
                 });
             }
 
-            // Update balance display
-            function updateBalanceDisplay(coins) {
-                userBalanceMinutesDisplay.textContent = `${coins} Coins`;
+            // MODIFIED: Update balance display for both coins
+            function updateBalanceDisplay(silver, gold) {
+                userBalanceSilverDisplay.textContent = silver;
+                userBalanceGoldDisplay.textContent = gold;
             }
 
-            // --- NOTIFICATION PERMISSION ---
-            function requestNotificationPermission() {
-                if (!("Notification" in window)) {
-                    console.log("This browser does not support desktop notification");
-                } else {
-                    Notification.requestPermission();
-                }
-            }
-
-            function showNotification(sender, message) {
-                if (Notification.permission === "granted" && document.visibilityState === "hidden") {
-                    const notification = new Notification(`New Message from ${sender}`, {
-                        body: message,
-                        icon: 'https://cdn-icons-png.flaticon.com/512/134/134914.png' // Generic icon
-                    });
+            // --- NEW: PUSH NOTIFICATION SETUP ---
+            async function setupPushNotifications() {
+                // Step 1: Create and Register the Service Worker
+                const swCode = `
+                    importScripts('https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js');
+                    importScripts('https://www.gstatic.com/firebasejs/8.6.1/firebase-messaging.js');
                     
-                    notification.onclick = function() {
-                        window.focus();
-                        notification.close();
-                    };
+                    const firebaseConfig = ${JSON.stringify(firebaseConfig)};
+                    firebase.initializeApp(firebaseConfig);
+                    
+                    const messaging = firebase.messaging();
+                    
+                    messaging.onBackgroundMessage((payload) => {
+                        console.log('Received background message ', payload);
+                        
+                        const notificationTitle = payload.notification.title;
+                        const notificationOptions = {
+                            body: payload.notification.body,
+                            icon: payload.notification.icon || '/favicon.ico'
+                        };
+                        
+                        self.registration.showNotification(notificationTitle, notificationOptions);
+                    });
+                `;
+
+                try {
+                    const blob = new Blob([swCode], { type: 'application/javascript' });
+                    const swReg = await navigator.serviceWorker.register(URL.createObjectURL(blob));
+                    console.log('Service Worker registered successfully', swReg);
+                } catch (error) {
+                    console.error('Service Worker registration failed:', error);
+                    return;
+                }
+
+                // Step 2: Request Permission and Get Token
+                if ('Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window) {
+                    const messaging = firebase.messaging();
+                    try {
+                        await Notification.requestPermission();
+                        const fcmToken = await messaging.getToken({
+                            serviceWorkerRegistration: await navigator.serviceWorker.ready,
+                            // MODIFIED: Added VAPID key from the provided image
+                            vapidKey: 'BMrus7tqbVWPAYlWOhaiBPs.Gch_uiE9XjQZMWi4aqqoMnZJrumoohBTfIRlu-c2jLWzLeHqcRd_4cRLbB4glO' 
+                        });
+
+                        if (fcmToken) {
+                            console.log('FCM Token:', fcmToken);
+                            // Save this token to the user's document in Firestore
+                            await firestore.collection('users').doc(currentUserId).update({
+                                fcmToken: fcmToken
+                            });
+                        } else {
+                            console.log('No registration token available. Request permission to generate one.');
+                        }
+                    } catch (err) {
+                        console.error('An error occurred while retrieving token. ', err);
+                    }
                 }
             }
 
@@ -1523,7 +1673,7 @@
                 signupForm.classList.remove('hidden');
             });
 
-            // --- NEW: Legal Pages Navigation ---
+            // --- Legal Pages Navigation ---
             const openLegalPage = (btnId, pageId) => {
                 const btn = document.getElementById(btnId);
                 if(btn) {
@@ -1578,7 +1728,7 @@
                 }
             });
 
-            // Signup Form Submission
+            // MODIFIED: Signup Form Submission with new coin structure
             signupForm.addEventListener('submit', (e) => {
                 e.preventDefault();
 
@@ -1605,7 +1755,8 @@
                             mobile: mobile,
                             email: email,
                             profileImg: profileImg,
-                            coins: 50, // Give new users 50 free coins
+                            silverCoins: 50, // Give new users 50 free silver coins
+                            goldCoins: 0,    // Start with 0 gold coins
                             isOnline: true,
                             about: "Hey there! I am using Batkaro.",
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1648,7 +1799,6 @@
                 const chatBtn = e.target.closest('.chat-btn');
                 if (chatBtn) {
                      if (!currentUserId) { alert("Please sign in to chat."); return; }
-                     // Coin check is now inside openChat
                     openChat(chatBtn.dataset.profileUid, chatBtn.dataset.profileName, chatBtn.dataset.profileImg);
                 }
 
@@ -1656,7 +1806,6 @@
                 const voiceBtn = e.target.closest('.voice-btn');
                 if (voiceBtn) {
                      if (!currentUserId) { alert("Please sign in to call."); return; }
-                     // Coin check is now inside startCall
                      const profileCard = voiceBtn.closest('.profile-card');
                      const uid = profileCard.dataset.profileUid;
                      if(uid) startCall(uid, false); // false = Audio Only
@@ -1666,7 +1815,6 @@
                 const videoBtn = e.target.closest('.video-btn');
                 if (videoBtn) {
                      if (!currentUserId) { alert("Please sign in to call."); return; }
-                     // Coin check is now inside startCall
                      const profileCard = videoBtn.closest('.profile-card');
                      const uid = profileCard.dataset.profileUid;
                      if(uid) startCall(uid, true); // true = Video Call
@@ -1680,7 +1828,8 @@
                 // Add balance button from profile
                 const addBalanceBtn = e.target.closest('.add-balance-btn');
                 if(addBalanceBtn) {
-                    showRechargeModal();
+                    showPage('recharge-screen');
+                    generateRechargePlans();
                 }
             });
 
@@ -1688,7 +1837,6 @@
             editProfileNavBtn.addEventListener('click', async () => {
                 if(!currentUserId) return;
                 
-                // Load current data
                 try {
                     const userDoc = await firestore.collection('users').doc(currentUserId).get();
                     if(userDoc.exists) {
@@ -1696,7 +1844,7 @@
                         document.getElementById('edit-name').value = data.name || '';
                         document.getElementById('edit-age').value = data.age || '';
                         document.getElementById('edit-about').value = data.about || '';
-                        onlineStatusToggle.checked = data.isOnline !== false; // Default true
+                        onlineStatusToggle.checked = data.isOnline !== false;
                     }
                     showPage('edit-profile-screen');
                 } catch (e) {
@@ -1729,116 +1877,97 @@
             });
 
 
-            // --- RECHARGE MODAL LOGIC (UPDATED FOR PAYMENT) ---
-            function showRechargeModal() {
-                generateRechargePlans();
-                rechargeModalOverlay.classList.add('active');
-            }
-
-            function hideRechargeModal() {
-                rechargeModalOverlay.classList.remove('active');
-            }
-            
-            closeRechargeModalBtn.addEventListener('click', hideRechargeModal);
-
+            // --- MODIFIED RECHARGE STORE LOGIC ---
             function generateRechargePlans() {
-                rechargePlansContainer.innerHTML = '';
-                // Rate: 1 Rupee = 1 Coin
-                const plans = [
-                    { amount: 10, bonusCoins: 0 },
-                    { amount: 20, bonusCoins: 2 },
-                    { amount: 50, bonusCoins: 5 },
-                    { amount: 100, bonusCoins: 15 },
-                    { amount: 200, bonusCoins: 35 },
-                    { amount: 500, bonusCoins: 100 }
+                goldRechargePlansContainer.innerHTML = '';
+                silverRechargePlansContainer.innerHTML = '';
+                
+                // Gold Coin Plans (for video calls)
+                const goldPlans = [
+                    { amount: 450, coins: 400, bonus: 50, tag: 'Starter' },
+                    { amount: 900, coins: 800, bonus: 150, tag: 'Popular' },
+                    { amount: 2000, coins: 1800, bonus: 400, tag: 'Best Value' }
+                ];
+                
+                // Silver Coin Plans (for voice and chat)
+                const silverPlans = [
+                    { amount: 5, coins: 50, bonus: 0, tag: 'Trial' },
+                    { amount: 50, coins: 500, bonus: 50, tag: 'Basic' },
+                    { amount: 100, coins: 1000, bonus: 150, tag: 'Value' }
                 ];
 
-                plans.forEach(plan => {
+                const createPlanElement = (plan, coinType) => {
                     const planElement = document.createElement('div');
                     planElement.className = 'recharge-plan';
-                    
-                    const baseCoins = plan.amount;
-                    const totalCoins = baseCoins + plan.bonusCoins;
-
-                    let detailsHTML = `<div class="plan-details">
-                        <span>${totalCoins} Coins</span>`;
-
-                    if (plan.bonusCoins > 0) {
-                        detailsHTML += `<p class="bonus">+${plan.bonusCoins} Bonus!</p>`;
+                    if (plan.tag === 'Best Value') {
+                        planElement.classList.add('best-value');
                     }
-                    detailsHTML += `</div>`;
 
-                    planElement.innerHTML = `${detailsHTML} <span class="plan-price">₹${plan.amount}</span>`;
+                    const totalCoins = plan.coins + plan.bonus;
+                    const coinIconColor = coinType === 'gold' ? 'var(--gold-coin)' : 'var(--silver-coin)';
+                    
+                    let tagHTML = '';
+                    if(plan.tag){
+                         tagHTML = `<div class="plan-tag">${plan.tag}</div>`;
+                    }
 
-                    // **CHANGE** - This now calls the payment function instead of adding coins directly
+                    planElement.innerHTML = `
+                        ${tagHTML}
+                        <div class="plan-info">
+                             <div class="plan-icon">
+                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${coinIconColor}" d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2Zm1.6,15.55h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2V8.45h3.2v4.42Z"/></svg>
+                             </div>
+                             <div class="plan-details">
+                                <span class="coins">${totalCoins} ${coinType.charAt(0).toUpperCase() + coinType.slice(1)} Coins</span>
+                                ${plan.bonus > 0 ? `<span class="bonus">+${plan.bonus} Bonus Coins!</span>` : ''}
+                             </div>
+                        </div>
+                        <div class="plan-price">₹ ${plan.amount}</div>
+                    `;
+
                     planElement.addEventListener('click', () => {
-                        initiateRecharge(plan.amount, totalCoins);
+                        initiateRecharge(plan.amount, totalCoins, coinType);
                     });
-
-                    rechargePlansContainer.appendChild(planElement);
-                });
+                    
+                    return planElement;
+                };
                 
-                // *** NEW: WHATSAPP PAYMENT BUTTON ***
-                const waButton = document.createElement('a');
-                waButton.className = 'whatsapp-promo';
-                waButton.href = "https://wa.me/917390928912?text=I%20want%20to%20buy%20coins%20for%20Batkaro%20App.%20Please%20help.";
-                waButton.target = "_blank";
-                waButton.innerHTML = `
-                    <strong>Payment Failed? Chat on WhatsApp</strong>
-                    <small>Get Cheaper Rates + 10 Extra Coins!</small>
-                `;
-                rechargePlansContainer.appendChild(waButton);
+                goldPlans.forEach(plan => {
+                    goldRechargePlansContainer.appendChild(createPlanElement(plan, 'gold'));
+                });
+
+                silverPlans.forEach(plan => {
+                    silverRechargePlansContainer.appendChild(createPlanElement(plan, 'silver'));
+                });
             }
 
-            // --- NEW RAZORPAY PAYMENT INTEGRATION ---
-            
-            // Step 2: Payment Process Shuru Karne Wala Function
-            async function initiateRecharge(amount, coinsToAdd) {
+            // --- MODIFIED RAZORPAY PAYMENT INTEGRATION ---
+            async function initiateRecharge(amount, coinsToAdd, coinType) {
                 if (!currentUserId) {
                     alert("Please login first to recharge.");
                     return;
                 }
 
                 try {
-                    // 1. Backend server se order_id mangwana
-                    const response = await fetch('/create-order', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ amount: amount })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error('Server error, could not create order.');
-                    }
-                    
-                    const order = await response.json();
-
-                    // 2. Razorpay Popup ke liye options taiyar karna
                     const options = {
-                        "key": "rzp_live_SDjCTqXe4qYEYs", // **UPDATED WITH YOUR LIVE KEY**
-                        "amount": order.amount,
+                        "key": "rzp_test_YourKey", // Replace with your actual Razorpay Key
+                        "amount": amount * 100, // Amount in paise
                         "currency": "INR",
                         "name": "Batkaro App",
-                        "description": "Coin Recharge",
-                        "order_id": order.id,
+                        "description": `${coinsToAdd} ${coinType} Coins Recharge`,
                         "handler": async function (response) {
-                            // Yeh function tab chalta hai jab payment successful ho jaata hai
                             console.log("Payment Successful", response);
                             alert("Payment Successful! Payment ID: " + response.razorpay_payment_id);
-                            
-                            // Ab Firebase me coins add karo
-                            addCoinsToDatabase(coinsToAdd);
+                            addCoinsToDatabase(coinsToAdd, coinType);
                         },
                         "prefill": {
-                            // Optional: User ka data yahan daal sakte hain
                             "email": auth.currentUser.email 
                         },
                         "theme": {
-                            "color": "#E91E63" // Aapka theme color
+                            "color": "#E91E63"
                         }
                     };
 
-                    // 3. Razorpay Popup ko kholna
                     const rzp1 = new Razorpay(options);
                     rzp1.on('payment.failed', function (response){
                         alert("Payment Failed: " + response.error.description);
@@ -1846,24 +1975,25 @@
                     });
 
                     rzp1.open();
-                    
-                    hideRechargeModal(); // Modal ko band kar do
-
                 } catch (error) {
                     console.error("Payment Error: ", error);
-                    alert("Payment failed to start. Please try again.");
+                    alert("Payment failed to start. Please try again or contact support on Telegram.");
                 }
             }
 
-            // Step 3: Payment ke baad Firebase me Coins add karne wala function
-            async function addCoinsToDatabase(coins) {
+            // --- MODIFIED: Add Coins to Firebase ---
+            async function addCoinsToDatabase(coins, coinType) {
                 if (!currentUserId) return;
                 try {
                     const userRef = firestore.collection('users').doc(currentUserId);
+                    const fieldToUpdate = coinType === 'gold' ? 'goldCoins' : 'silverCoins';
+                    
                     await userRef.update({
-                        coins: firebase.firestore.FieldValue.increment(coins)
+                        [fieldToUpdate]: firebase.firestore.FieldValue.increment(coins)
                     });
-                    alert(`Congratulations! ${coins} coins have been added to your account.`);
+                    
+                    alert(`Congratulations! ${coins} ${coinType} coins have been added to your account.`);
+                    showPage('home-screen'); // Go back home after successful recharge
                 } catch (error) {
                     console.error("Error adding coins to database:", error);
                     alert("There was an error adding coins. Please contact support.");
@@ -1871,34 +2001,33 @@
             }
             
             // --- MODIFIED BILLING FUNCTIONS ---
-
-            // Function to deduct coins periodically during a call
-            function startCallTimer(costPerMinute) {
+            function startCallTimer(costPerMinute, coinType) {
                 if(activeCallInterval) clearInterval(activeCallInterval);
                 
-                // This interval now handles deductions from the SECOND minute onwards
                 activeCallInterval = setInterval(async () => {
                     if(!currentUserId) {
                         stopCallTimer();
                         return;
                     }
                     
-                    if (currentUserCoins < costPerMinute) {
+                    const currentBalance = coinType === 'gold' ? currentUserGoldCoins : currentUserSilverCoins;
+                    if (currentBalance < costPerMinute) {
                          endCall();
                          alert("Call ended: Insufficient coins.");
                          return;
                     }
-                    
+
                     try {
                         const userRef = firestore.collection('users').doc(currentUserId);
+                        const fieldToUpdate = coinType === 'gold' ? 'goldCoins' : 'silverCoins';
                         await userRef.update({
-                            coins: firebase.firestore.FieldValue.increment(-costPerMinute)
+                            [fieldToUpdate]: firebase.firestore.FieldValue.increment(-costPerMinute)
                         });
                     } catch (e) {
                         console.error("Deduction error", e);
-                        endCall(); // End call if deduction fails
+                        endCall();
                     }
-                }, 60000); // Run every 60 seconds
+                }, 60000);
             }
             
             function stopCallTimer() {
@@ -1908,7 +2037,6 @@
                 }
             }
             
-            // NEW: Function to stop the chat billing timer
             function stopChatTimer() {
                 if(activeChatInterval) {
                     clearInterval(activeChatInterval);
@@ -1919,10 +2047,8 @@
 
 
             // --- CHAT AND USER-RELATED FUNCTIONS ---
-
             function markMessagesAsSeen(chatId, otherUserId) {
                 if (!chatId || !otherUserId) return;
-
                 const messagesRef = database.ref(`chats/${chatId}`);
                 messagesRef.orderByChild('senderId').equalTo(otherUserId).once('value', snapshot => {
                     snapshot.forEach(childSnapshot => {
@@ -1934,46 +2060,44 @@
                 });
             }
 
+            // MODIFIED: openChat now uses and deducts Silver Coins
             async function openChat(otherUserId, name, img) {
                 if (!currentUserId || !otherUserId) return;
 
-                // --- NEW CHAT BILLING LOGIC ---
-                if (currentUserCoins < COST_CHAT_PER_MIN) {
-                    alert("You need at least " + COST_CHAT_PER_MIN + " coins to start chatting. Please recharge.");
-                    showRechargeModal();
+                if (currentUserSilverCoins < COST_CHAT_PER_MIN) {
+                    alert("You need at least " + COST_CHAT_PER_MIN + " Silver Coins to start chatting. Please recharge.");
+                    showPage('recharge-screen');
+                    generateRechargePlans();
                     return;
                 }
                 
-                stopChatTimer(); // Stop any previous timer just in case
+                stopChatTimer();
 
                 try {
                     const userRef = firestore.collection('users').doc(currentUserId);
-                    // Initial deduction for the first minute
                     await userRef.update({
-                        coins: firebase.firestore.FieldValue.increment(-COST_CHAT_PER_MIN)
+                        silverCoins: firebase.firestore.FieldValue.increment(-COST_CHAT_PER_MIN)
                     });
 
-                    // Start timer for subsequent minutes
                     activeChatInterval = setInterval(async () => {
-                        if (currentUserCoins < COST_CHAT_PER_MIN) {
+                        if (currentUserSilverCoins < COST_CHAT_PER_MIN) {
                             stopChatTimer();
-                            alert("Chat ended due to insufficient coins. Please recharge to continue.");
-                            showPage('home-screen'); // Navigate away from chat
-                            showRechargeModal();
+                            alert("Chat ended due to insufficient Silver Coins. Please recharge to continue.");
+                            showPage('recharge-screen');
+                            generateRechargePlans();
                             return;
                         }
                         await userRef.update({
-                            coins: firebase.firestore.FieldValue.increment(-COST_CHAT_PER_MIN)
+                            silverCoins: firebase.firestore.FieldValue.increment(-COST_CHAT_PER_MIN)
                         });
-                    }, 60000); // Deduct every 60 seconds
+                    }, 60000);
 
-                    console.log("Chat billing started.");
+                    console.log("Chat billing started (Silver Coins).");
                 } catch (error) {
                     console.error("Error starting chat billing:", error);
                     alert("A billing error occurred. Please try again.");
-                    return; // Don't open chat if initial billing fails
+                    return;
                 }
-                // --- END NEW CHAT BILLING LOGIC ---
 
                 const ids = [currentUserId, otherUserId].sort();
                 currentChatId = ids.join('_');
@@ -1988,28 +2112,17 @@
                 showPage('chat-conversation-screen');
             }
 
-            // *** OPTIMIZED CHAT LOADING FUNCTION (FIX FOR SLOW CHAT) ***
             function loadMessages(chatId) {
-                // Remove old listener
                 if (messagesRef) { 
                     messagesRef.off(); 
                 }
-                
                 const messagesContainer = document.querySelector('.chat-messages');
-                messagesContainer.innerHTML = ''; // Clear previous chat
-                
+                messagesContainer.innerHTML = '';
                 messagesRef = database.ref(`chats/${chatId}`);
-                
-                // Use 'child_added' for real-time performance instead of reloading everything
                 messagesListener = messagesRef.orderByChild('timestamp').limitToLast(100).on('child_added', (snapshot) => {
                     const message = snapshot.val();
                     displayMessage(snapshot.key, message);
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                    
-                    // Show Notification if message is from other user and document is hidden
-                    if (message.senderId !== currentUserId) {
-                        showNotification(document.querySelector('.chat-header-info .name').textContent || "New Message", message.text);
-                    }
                 });
             }
 
@@ -2019,9 +2132,7 @@
                 messageBubble.classList.add('message-bubble', message.senderId === currentUserId ? 'sent' : 'received');
 
                 const getTicksHTML = (status) => {
-                    if (status === 'sent') {
-                        return '<span class="ticks">✓</span>'; 
-                    }
+                    if (status === 'sent') return '<span class="ticks">✓</span>'; 
                     return `<span class="ticks ${status === 'seen' ? 'seen' : ''}">✓✓</span>`;
                 };
 
@@ -2034,15 +2145,17 @@
                 `;
                 messagesContainer.appendChild(messageBubble);
             }
-
+            
+            // MODIFIED: sendMessage now checks for Silver Coins
             async function sendMessage() {
                 const chatInput = document.getElementById('chat-input-field');
                 const messageText = chatInput.value.trim();
                 if (messageText === '' || !currentChatId || !currentUserId) return;
 
-                if (currentUserCoins < 1) { // A small check before sending
-                     alert("Low balance! Please recharge to continue chatting.");
-                     showRechargeModal();
+                if (currentUserSilverCoins < 1) { // Check if user has at least 1 silver coin to send a message
+                     alert("Low balance! Please recharge Silver Coins to continue chatting.");
+                     showPage('recharge-screen');
+                     generateRechargePlans();
                      return;
                 }
 
@@ -2068,7 +2181,7 @@
                     chatInput.value = '';
                 } catch (error) {
                     console.error("Error sending message:", error);
-                    alert("Failed to send message. Please check your connection and Firebase rules.");
+                    alert("Failed to send message. Please check your connection.");
                 }
             }
 
@@ -2123,15 +2236,14 @@
                     console.error("Error fetching users:", error);
                 }
             }
-
-            // MODIFIED: Render Users with 3 Buttons
+            
+            // MODIFIED: renderUsersOnHomeScreen with new cost display
             function renderUsersOnHomeScreen(users) {
                 const profileGrid = document.querySelector('.profile-grid');
                 profileGrid.innerHTML = '';
                 users.forEach(user => {
                     const profileCard = document.createElement('div');
                     profileCard.className = 'profile-card';
-                    // Check online status (default to online if undefined for older users)
                     if (user.isOnline === false) {
                         profileCard.classList.add('offline');
                     }
@@ -2152,18 +2264,15 @@
                                 <span>Hindi</span> • <span>Friendly</span>
                             </div>
                             <div class="profile-card-footer">
-                                <span class="rate">Chat: 2 | Voice: 4 | Video: 10 (Coins/min)</span>
+                                <span class="rate">Chat: ${COST_CHAT_PER_MIN}🥈 | Voice: ${COST_VOICE_PER_MIN}🥈 | Video: ${COST_VIDEO_PER_MIN}🥇 (/min)</span>
                                 <div class="card-actions">
-                                    <!-- Chat Button -->
                                     <button class="card-action-btn chat-btn" data-profile-uid="${user.uid}" data-profile-name="${user.name}" data-profile-img="${user.profileImg}">
                                         <svg viewBox="0 0 24 24"><path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2M20 16H5.2L4 17.2V4H20V16Z"></path></svg>
                                     </button>
-                                    <!-- Voice Call Button -->
-                                    <button class="card-action-btn voice-btn" data-profile-name="${user.name} • ${user.age} Y">
+                                    <button class="card-action-btn voice-btn">
                                         <svg viewBox="0 0 24 24"><path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z"></path></svg>
                                     </button>
-                                    <!-- Video Call Button -->
-                                    <button class="card-action-btn video-btn" data-profile-name="${user.name} • ${user.age} Y">
+                                    <button class="card-action-btn video-btn">
                                        <svg viewBox="0 0 24 24"><path d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z"></path></svg>
                                     </button>
                                 </div>
@@ -2174,25 +2283,14 @@
                 });
             }
             
-            // --- 📞 WEBRTC IMPLEMENTATION 📞 ---
-
+            // --- WEBRTC IMPLEMENTATION ---
             async function setupLocalMedia(isVideo) {
                 try {
-                    const constraints = {
-                        audio: true,
-                        video: isVideo ? { facingMode: currentFacingMode } : false
-                    };
-                    
+                    const constraints = { audio: true, video: isVideo ? { facingMode: currentFacingMode } : false };
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
                     localVideo.srcObject = stream;
                     localStream = stream;
-                    
-                    if (!isVideo) {
-                        localVideo.style.display = 'none';
-                    } else {
-                        localVideo.style.display = 'block';
-                    }
-                    
+                    localVideo.style.display = isVideo ? 'block' : 'none';
                     return stream;
                 } catch (error) {
                     console.error('Error accessing media devices.', error);
@@ -2202,94 +2300,65 @@
             }
             
             async function switchCamera() {
-                if (!localStream || !peerConnection) {
-                    console.warn("Cannot switch camera: local stream or peer connection is not ready.");
-                    return;
-                }
-                
-                if (localStream.getVideoTracks().length === 0) return;
-
+                if (!localStream || !peerConnection || localStream.getVideoTracks().length === 0) return;
                 currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-
                 try {
-                    const newVideoStream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: currentFacingMode }
-                    });
+                    const newVideoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } });
                     const newVideoTrack = newVideoStream.getVideoTracks()[0];
                     const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
-                    
-                    if (sender) {
-                        await sender.replaceTrack(newVideoTrack);
-                    }
-
+                    if (sender) await sender.replaceTrack(newVideoTrack);
                     localStream.getVideoTracks().forEach(track => track.stop());
-
                     const audioTrack = localStream.getAudioTracks()[0];
                     localStream = new MediaStream([newVideoTrack, audioTrack]);
-                    
                     localVideo.srcObject = localStream;
-
                 } catch (error) {
                     console.error("Error switching camera:", error);
-                    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-                    alert("Could not switch camera. The other camera may not be available on your device.");
+                    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user'; // Revert on error
+                    alert("Could not switch camera.");
                 }
             }
             switchCameraBtn.addEventListener('click', switchCamera);
-
+            
+            // MODIFIED: startCall checks and uses the correct coin type
             async function startCall(receiverUid, isVideo) {
+                const coinType = isVideo ? 'gold' : 'silver';
                 const costPerMinute = isVideo ? COST_VIDEO_PER_MIN : COST_VOICE_PER_MIN;
+                const currentBalance = isVideo ? currentUserGoldCoins : currentUserSilverCoins;
 
-                // NEW: Initial Coin Check
-                if (currentUserCoins < costPerMinute) {
-                    alert("You need at least " + costPerMinute + " coins for this call. Please recharge.");
-                    showRechargeModal();
+                if (currentBalance < costPerMinute) {
+                    alert(`You need at least ${costPerMinute} ${coinType} coins for this call. Please recharge.`);
+                    showPage('recharge-screen');
+                    generateRechargePlans();
                     return;
                 }
                 
                 await setupLocalMedia(isVideo);
                 if(!localStream) return;
                 
-                // NEW: Initial Deduction for the first minute
                 try {
                      const userRef = firestore.collection('users').doc(currentUserId);
+                     const fieldToUpdate = coinType === 'gold' ? 'goldCoins' : 'silverCoins';
                      await userRef.update({
-                         coins: firebase.firestore.FieldValue.increment(-costPerMinute)
+                         [fieldToUpdate]: firebase.firestore.FieldValue.increment(-costPerMinute)
                      });
                 } catch(e) {
                     console.error("Initial call deduction failed:", e);
                     alert("A billing error occurred. Call could not be started.");
-                    if (localStream) {
-                        localStream.getTracks().forEach(track => track.stop());
-                        localStream = null;
-                    }
+                    if (localStream) localStream.getTracks().forEach(track => track.stop());
                     return;
                 }
                 
-                // Start the timer for subsequent minutes (2nd minute onwards)
-                startCallTimer(costPerMinute);
-
+                startCallTimer(costPerMinute, coinType);
                 showPage('call-screen');
 
                 callRef = database.ref('calls').push();
                 currentCallId = callRef.key;
-
                 peerConnection = new RTCPeerConnection(servers);
 
-                localStream.getTracks().forEach(track => {
-                    peerConnection.addTrack(track, localStream);
-                });
-
-                peerConnection.ontrack = event => {
-                    event.streams[0].getTracks().forEach(track => {
-                        remoteVideo.srcObject = event.streams[0];
-                    });
-                };
-
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+                peerConnection.ontrack = event => remoteVideo.srcObject = event.streams[0];
                 peerConnection.onicecandidate = event => {
-                    if (event.candidate) {
-                        callRef.child('offerCandidates').push(event.candidate.toJSON());
-                    }
+                    if (event.candidate) callRef.child('offerCandidates').push(event.candidate.toJSON());
                 };
 
                 const offerDescription = await peerConnection.createOffer();
@@ -2298,29 +2367,25 @@
                 const callerDoc = await firestore.collection('users').doc(currentUserId).get();
                 const callerData = callerDoc.data();
 
-                const callData = {
+                await callRef.set({
                     offer: { sdp: offerDescription.sdp, type: offerDescription.type },
                     callerId: currentUserId,
                     callerName: callerData.name || "Unknown",
                     callerImg: callerData.profileImg || "",
                     receiverId: receiverUid,
                     timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    type: isVideo ? 'video' : 'voice' // Store call type
-                };
-                
-                await callRef.set(callData);
+                    type: isVideo ? 'video' : 'voice'
+                });
 
                 callRef.on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data && data.answer && !peerConnection.currentRemoteDescription) {
-                        const answerDescription = new RTCSessionDescription(data.answer);
-                        peerConnection.setRemoteDescription(answerDescription);
+                        peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
                     }
                 });
 
                 callRef.child('answerCandidates').on('child_added', (snapshot) => {
-                    const candidate = new RTCIceCandidate(snapshot.val());
-                    peerConnection.addIceCandidate(candidate);
+                    peerConnection.addIceCandidate(new RTCIceCandidate(snapshot.val()));
                 });
             }
 
@@ -2329,15 +2394,11 @@
                     const data = snapshot.val();
                     if (data && !data.answer && (Date.now() - data.timestamp < 60000)) { 
                         currentCallId = snapshot.key;
-                        showIncomingCallModal(data.callerName, data.callerImg, data.type);
+                        incomingCallerName.textContent = data.callerName;
+                        incomingCallerImg.src = data.callerImg || "https://via.placeholder.com/100";
+                        incomingCallModal.classList.add('active');
                     }
                 });
-            }
-
-            function showIncomingCallModal(name, img, type) {
-                incomingCallerName.textContent = name;
-                incomingCallerImg.src = img || "https://via.placeholder.com/100";
-                incomingCallModal.classList.add('active');
             }
 
             acceptCallBtn.addEventListener('click', async () => {
@@ -2348,45 +2409,34 @@
                 const callData = callSnapshot.val();
                 
                 const isVideo = callData.type === 'video';
-                
+                const coinType = isVideo ? 'gold' : 'silver';
+                const costPerMinute = isVideo ? COST_VIDEO_PER_MIN : COST_VOICE_PER_MIN;
+
+                // Receiver also needs coins to accept the call
+                if ((isVideo && currentUserGoldCoins < costPerMinute) || (!isVideo && currentUserSilverCoins < costPerMinute)) {
+                    alert(`You need at least ${costPerMinute} ${coinType} coins to accept this call. Please recharge.`);
+                    rejectCallBtn.click(); // Automatically reject if not enough coins
+                    return;
+                }
+
                 await setupLocalMedia(isVideo);
                 if(!localStream) return;
                 
                 showPage('call-screen');
-                
                 peerConnection = new RTCPeerConnection(servers);
-
-                 localStream.getTracks().forEach(track => {
-                    peerConnection.addTrack(track, localStream);
-                });
-
-                peerConnection.ontrack = event => {
-                    event.streams[0].getTracks().forEach(track => {
-                        remoteVideo.srcObject = event.streams[0];
-                    });
-                };
-
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+                peerConnection.ontrack = event => remoteVideo.srcObject = event.streams[0];
                 peerConnection.onicecandidate = event => {
-                    if (event.candidate) {
-                        callRef.child('answerCandidates').push(event.candidate.toJSON());
-                    }
+                    if (event.candidate) callRef.child('answerCandidates').push(event.candidate.toJSON());
                 };
 
-                const offerDescription = callData.offer;
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(offerDescription));
-
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
                 const answerDescription = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answerDescription);
 
-                const answer = {
-                    type: answerDescription.type,
-                    sdp: answerDescription.sdp,
-                };
-                await callRef.update({ answer });
-
+                await callRef.update({ answer: { type: answerDescription.type, sdp: answerDescription.sdp } });
                 callRef.child('offerCandidates').on('child_added', (snapshot) => {
-                    const candidate = new RTCIceCandidate(snapshot.val());
-                    peerConnection.addIceCandidate(candidate);
+                    peerConnection.addIceCandidate(new RTCIceCandidate(snapshot.val()));
                 });
             });
 
@@ -2394,35 +2444,25 @@
                 incomingCallModal.classList.remove('active');
             });
 
-            hangupBtn.addEventListener('click', () => {
-                endCall();
-            });
+            hangupBtn.addEventListener('click', endCall);
 
             function endCall() {
-                stopCallTimer(); // Stop charging
-                
+                stopCallTimer();
                 if (peerConnection) {
                     peerConnection.close();
                     peerConnection = null;
                 }
-                
                 if (localStream) {
                     localStream.getTracks().forEach(track => track.stop());
                     localStream = null;
                 }
-
                 localVideo.srcObject = null;
                 remoteVideo.srcObject = null;
                 showPage('home-screen');
-                
-                if (callRef) {
-                    callRef.off();
-                }
+                if (callRef) callRef.off();
                 currentCallId = null;
-                
                 currentFacingMode = 'user';
             }
-
         });
     </script>
 </body>
