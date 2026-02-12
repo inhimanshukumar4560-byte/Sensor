@@ -290,12 +290,12 @@
         }
         
         .profile-card.offline {
-            opacity: 0.6;
-            filter: grayscale(80%);
+            /* opacity: 0.6; */ /* REMOVED: Making everyone look online */
+            /* filter: grayscale(80%); */ /* REMOVED: Making everyone look online */
         }
         
         .profile-card.offline .online-dot {
-            background-color: #9E9E9E; /* Grey dot for offline */
+            background-color: var(--online-indicator); /* MODIFIED: Always show Green */
         }
 
 
@@ -1565,6 +1565,7 @@
                     listenForIncomingCalls(user.uid); 
                     fetchAllUsers();
                     setupPushNotifications(); // NEW: Setup push notifications on login
+                    loadRecentCalls(); // NEW: Load call history
                     showPage('home-screen'); 
                 } else {
                     currentUserId = null;
@@ -1599,61 +1600,26 @@
 
             // --- NEW: PUSH NOTIFICATION SETUP ---
             async function setupPushNotifications() {
-                // Step 1: Create and Register the Service Worker
-                const swCode = `
-                    importScripts('https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js');
-                    importScripts('https://www.gstatic.com/firebasejs/8.6.1/firebase-messaging.js');
-                    
-                    const firebaseConfig = ${JSON.stringify(firebaseConfig)};
-                    firebase.initializeApp(firebaseConfig);
-                    
-                    const messaging = firebase.messaging();
-                    
-                    messaging.onBackgroundMessage((payload) => {
-                        console.log('Received background message ', payload);
-                        
-                        const notificationTitle = payload.notification.title;
-                        const notificationOptions = {
-                            body: payload.notification.body,
-                            icon: payload.notification.icon || '/favicon.ico'
-                        };
-                        
-                        self.registration.showNotification(notificationTitle, notificationOptions);
-                    });
-                `;
-
-                try {
-                    const blob = new Blob([swCode], { type: 'application/javascript' });
-                    const swReg = await navigator.serviceWorker.register(URL.createObjectURL(blob));
-                    console.log('Service Worker registered successfully', swReg);
-                } catch (error) {
-                    console.error('Service Worker registration failed:', error);
-                    return;
-                }
-
-                // Step 2: Request Permission and Get Token
-                if ('Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window) {
-                    const messaging = firebase.messaging();
+                if ('Notification' in window) {
                     try {
-                        await Notification.requestPermission();
-                        const fcmToken = await messaging.getToken({
-                            serviceWorkerRegistration: await navigator.serviceWorker.ready,
-                            // MODIFIED: Added VAPID key from the provided image
-                            vapidKey: 'BMrus7tqbVWPAYlWOhaiBPs.Gch_uiE9XjQZMWi4aqqoMnZJrumoohBTfIRlu-c2jLWzLeHqcRd_4cRLbB4glO' 
-                        });
-
-                        if (fcmToken) {
-                            console.log('FCM Token:', fcmToken);
-                            // Save this token to the user's document in Firestore
-                            await firestore.collection('users').doc(currentUserId).update({
-                                fcmToken: fcmToken
-                            });
-                        } else {
-                            console.log('No registration token available. Request permission to generate one.');
+                        const permission = await Notification.requestPermission();
+                        if (permission === 'granted') {
+                            console.log('Notification permission granted.');
+                            // We can now show local notifications using new Notification()
                         }
                     } catch (err) {
-                        console.error('An error occurred while retrieving token. ', err);
+                        console.error('Error requesting notification permission:', err);
                     }
+                }
+            }
+
+            // Helper to show local notifications
+            function showNotification(title, body, icon) {
+                if (Notification.permission === 'granted') {
+                    new Notification(title, {
+                        body: body,
+                        icon: icon || 'https://via.placeholder.com/50'
+                    });
                 }
             }
 
@@ -2131,6 +2097,13 @@
                 const messageBubble = document.createElement('div');
                 messageBubble.classList.add('message-bubble', message.senderId === currentUserId ? 'sent' : 'received');
 
+                // NEW: Show Notification if receiving message and not on screen
+                if (message.senderId !== currentUserId) {
+                   if (document.hidden || !document.getElementById('chat-conversation-screen').classList.contains('active')) {
+                       showNotification('New Message', message.text, null);
+                   }
+                }
+
                 const getTicksHTML = (status) => {
                     if (status === 'sent') return '<span class="ticks">✓</span>'; 
                     return `<span class="ticks ${status === 'seen' ? 'seen' : ''}">✓✓</span>`;
@@ -2237,16 +2210,20 @@
                 }
             }
             
-            // MODIFIED: renderUsersOnHomeScreen with new cost display
+            // MODIFIED: renderUsersOnHomeScreen with "Always Online" Fix
             function renderUsersOnHomeScreen(users) {
                 const profileGrid = document.querySelector('.profile-grid');
                 profileGrid.innerHTML = '';
                 users.forEach(user => {
                     const profileCard = document.createElement('div');
                     profileCard.className = 'profile-card';
-                    if (user.isOnline === false) {
-                        profileCard.classList.add('offline');
-                    }
+                    
+                    // --- MODIFIED: REMOVED OFFLINE CHECK TO MAKE EVERYONE ONLINE ---
+                    // if (user.isOnline === false) {
+                    //     profileCard.classList.add('offline');
+                    // }
+                    // ----------------------------------------------------------------
+
                     profileCard.dataset.profileUid = user.uid;
 
                     profileCard.innerHTML = `
@@ -2280,6 +2257,61 @@
                         </div>
                     `;
                     profileGrid.appendChild(profileCard);
+                });
+            }
+
+            // NEW: Load Recent Calls Logic (Call History)
+            function loadRecentCalls() {
+                if(!currentUserId) return;
+                const recentList = document.getElementById('recent-calls-list');
+                
+                // Listening to 'calls' node where callerId is currentUserId
+                // Note: This is a basic implementation. For production, you might want a separate 'callHistory' node.
+                database.ref('calls').orderByChild('callerId').equalTo(currentUserId).limitToLast(20).on('value', snapshot => {
+                    recentList.innerHTML = '';
+                    const calls = [];
+                    snapshot.forEach(child => {
+                         calls.push(child.val());
+                    });
+                    // Reverse to show newest first
+                    calls.reverse().forEach(call => {
+                        // We need the receiver's details. In this simplified structure, we might need to fetch user data
+                        // or store receiver details in the call object. 
+                        // Assuming we want to show who we called. 
+                        // We will try to fetch receiver details from Firestore if possible, or use a placeholder if not stored.
+                        // Ideally, store 'receiverName' and 'receiverImg' in the call object during startCall.
+                        
+                        // Fallback display since we didn't store receiverName in previous code
+                         const listItem = document.createElement('li');
+                         listItem.className = 'chat-list-item';
+                         // Fetch receiver info asynchronously
+                         firestore.collection('users').doc(call.receiverId).get().then(doc => {
+                             if(doc.exists) {
+                                 const receiverData = doc.data();
+                                 listItem.innerHTML = `
+                                    <img src="${receiverData.profileImg || 'https://via.placeholder.com/50'}" alt="${receiverData.name}">
+                                    <div class="chat-info">
+                                        <div class="chat-info-header">
+                                            <span class="chat-name">${receiverData.name}</span>
+                                            <span class="chat-timestamp">${new Date(call.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                        </div>
+                                        <p class="last-message">${call.type === 'video' ? '🎥 Video Call' : '📞 Voice Call'}</p>
+                                    </div>
+                                 `;
+                             } else {
+                                 listItem.innerHTML = `
+                                    <div class="chat-info">
+                                        <p class="last-message">User not found</p>
+                                    </div>
+                                 `;
+                             }
+                         });
+                         recentList.appendChild(listItem);
+                    });
+                    
+                    if(calls.length === 0) {
+                         recentList.innerHTML = '<p class="empty-list-placeholder">No recent calls.</p>';
+                    }
                 });
             }
             
@@ -2397,6 +2429,8 @@
                         incomingCallerName.textContent = data.callerName;
                         incomingCallerImg.src = data.callerImg || "https://via.placeholder.com/100";
                         incomingCallModal.classList.add('active');
+                        // NEW: Show notification for incoming call
+                        showNotification('Incoming Call', `${data.callerName} is calling...`, data.callerImg);
                     }
                 });
             }
@@ -2409,15 +2443,9 @@
                 const callData = callSnapshot.val();
                 
                 const isVideo = callData.type === 'video';
-                const coinType = isVideo ? 'gold' : 'silver';
-                const costPerMinute = isVideo ? COST_VIDEO_PER_MIN : COST_VOICE_PER_MIN;
-
-                // Receiver also needs coins to accept the call
-                if ((isVideo && currentUserGoldCoins < costPerMinute) || (!isVideo && currentUserSilverCoins < costPerMinute)) {
-                    alert(`You need at least ${costPerMinute} ${coinType} coins to accept this call. Please recharge.`);
-                    rejectCallBtn.click(); // Automatically reject if not enough coins
-                    return;
-                }
+                // --- MODIFIED: REMOVED COIN CHECK FOR RECEIVER ---
+                // The receiver does not need coins to accept.
+                // -------------------------------------------------
 
                 await setupLocalMedia(isVideo);
                 if(!localStream) return;
