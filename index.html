@@ -9,6 +9,14 @@
     <!-- Step 1: RAZORPAY SCRIPT (Payment ke liye zaroori hai) -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     
+    <!-- Step 2: OneSignal SDK (Notification ke liye zaroori hai) -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+    <!-- New Welcome Screen Dependencies -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
     <!-- Original Styles and Fonts -->
     <style>
         /* --- 🌑 GLOBAL THEME & STYLE (DEFAULT/LIGHT MODE) --- */
@@ -290,12 +298,12 @@
         }
         
         .profile-card.offline {
-            /* opacity: 0.6; */ /* REMOVED: Making everyone look online */
-            /* filter: grayscale(80%); */ /* REMOVED: Making everyone look online */
+            opacity: 0.6;
+            filter: grayscale(80%);
         }
         
         .profile-card.offline .online-dot {
-            background-color: var(--online-indicator); /* MODIFIED: Always show Green */
+            background-color: #9E9E9E; /* Grey dot for offline */
         }
 
 
@@ -856,35 +864,6 @@
         .legal-content ul { padding-left: 20px; }
         .contact-link { color: var(--primary-blue); font-weight: 600; text-decoration: none; }
 
-    </style>
-    
-    <!-- New Welcome Screen Dependencies -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#ee2b8c",
-                        "background-light": "#f8f6f7",
-                        "background-dark": "#221019",
-                    },
-                    fontFamily: {
-                        "display": ["Plus Jakarta Sans", "sans-serif"]
-                    },
-                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
-                    boxShadow: {
-                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-                        'glow': '0 0 20px rgba(238, 43, 140, 0.3)',
-                    }
-                },
-            },
-        }
-    </script>
-    <style>
         /* Styles for the new Welcome Screen */
         #welcome-screen.page.active {
             display: block; /* Override flex to allow Tailwind to control layout */
@@ -930,7 +909,33 @@
             opacity: 0; 
             animation: fadeInUp 0.7s ease-out forwards;
         }
+        
+        #tailwind-config { display: none; } /* Hide the script block */
+
     </style>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ee2b8c",
+                        "background-light": "#f8f6f7",
+                        "background-dark": "#221019",
+                    },
+                    fontFamily: {
+                        "display": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+                        'glow': '0 0 20px rgba(238, 43, 140, 0.3)',
+                    }
+                },
+            },
+        }
+    </script>
 
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display antialiased text-[#181114] overflow-x-hidden selection:bg-primary selection:text-white">
@@ -1417,9 +1422,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-firestore.js"></script>
-    <!-- NEW: Firebase Cloud Messaging SDK for Push Notifications -->
-    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-messaging.js"></script>
-
+    <!-- REMOVED FIREBASE MESSAGING SDK AS REQUESTED - USING ONESIGNAL INSTEAD -->
 
     <script>
         // Your web app's Firebase configuration
@@ -1439,6 +1442,48 @@
         const auth = firebase.auth();
         const database = firebase.database();
         const firestore = firebase.firestore();
+
+        // --- NEW: ONESIGNAL SETUP WITH YOUR KEYS ---
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(function(OneSignal) {
+            OneSignal.init({
+                appId: "4e0f6959-307c-4cb9-89a2-c3982dcebdc1", // YOUR APP ID
+                safari_web_id: "web.onesignal.auto.xxxxx",
+                notifyButton: {
+                    enable: true,
+                },
+            });
+        });
+
+        // --- NEW: FUNCTION TO SEND NOTIFICATION VIA ONESIGNAL REST API ---
+        async function sendPushNotification(targetUid, title, message) {
+            const ONE_SIGNAL_APP_ID = "4e0f6959-307c-4cb9-89a2-c3982dcebdc1";
+            const ONE_SIGNAL_API_KEY = "os_v2_app_jyhwswjqprgltcncyomc3tv5yfjmtbsw4s4ukmneruoyreoy3qgz6fw4vl757f4gy4kay6pch6uazclkz64gt6hqiyhjjt3w5awcgta";
+
+            const options = {
+                method: 'POST',
+                headers: {
+                    accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    Authorization: 'Basic ' + ONE_SIGNAL_API_KEY
+                },
+                body: JSON.stringify({
+                    app_id: ONE_SIGNAL_APP_ID,
+                    include_aliases: { "external_id": [targetUid] },
+                    headings: { "en": title },
+                    contents: { "en": message },
+                    target_channel: "push"
+                })
+            };
+
+            try {
+                await fetch('https://onesignal.com/api/v1/notifications', options);
+                console.log("OneSignal Notification Sent");
+            } catch (err) {
+                console.error("OneSignal Error:", err);
+            }
+        }
+
 
         document.addEventListener('DOMContentLoaded', () => {
             // --- Elements ---
@@ -1494,6 +1539,7 @@
             let messagesRef = null;
             let messagesListener = null;
             let chatListListener = null;
+            let callHistoryListener = null; // CHANGE: Added for call history
             
             // WEBRTC Variables
             let localStream = null;
@@ -1526,11 +1572,6 @@
             const incomingCallerImg = document.getElementById('incoming-caller-img');
             const switchCameraBtn = document.getElementById('switchCameraBtn');
             
-            // --- Mock DB for active chats (will be replaced by Firebase listener) ---
-            const db = {
-                activeChats: []
-            };
-
             // --- Page Navigation (Simplified) ---
             const showPage = (pageId) => {
                 if (document.getElementById('chat-conversation-screen').classList.contains('active') && pageId !== 'chat-conversation-screen') {
@@ -1560,21 +1601,59 @@
             auth.onAuthStateChanged(user => {
                 if (user) {
                     currentUserId = user.uid;
+                    
+                    // --- NEW: LOGIN TO ONESIGNAL ---
+                    OneSignalDeferred.push(function(OneSignal) {
+                        OneSignal.login(user.uid);
+                    });
+
+                    setupPresence(user.uid); // CHANGE: Setup online/offline presence
                     listenForUserData(user.uid);
                     listenForNewChats(user.uid);
                     listenForIncomingCalls(user.uid); 
+                    listenForRecentCalls(user.uid); // CHANGE: Listen for call history
                     fetchAllUsers();
-                    setupPushNotifications(); // NEW: Setup push notifications on login
-                    loadRecentCalls(); // NEW: Load call history
                     showPage('home-screen'); 
                 } else {
                     currentUserId = null;
+                    // CHANGE: Clean up listeners on logout
                     if (chatListListener) chatListListener.off();
+                    if (callHistoryListener) callHistoryListener.off();
+                    if (messagesRef) messagesRef.off();
+                    
                     document.querySelector('.profile-grid').innerHTML = '';
                     document.querySelector('.chat-list').innerHTML = '';
+                    document.querySelector('#recent-calls-list').innerHTML = '';
                     showPage('welcome-screen');
                 }
             });
+
+            // --- CHANGE: ADDED USER PRESENCE SYSTEM ---
+            function setupPresence(uid) {
+                const userStatusDatabaseRef = database.ref('/status/' + uid);
+                const userStatusFirestoreRef = firestore.collection('users').doc(uid);
+
+                const isOfflineForDatabase = {
+                    isOnline: false,
+                    last_changed: firebase.database.ServerValue.TIMESTAMP,
+                };
+
+                const isOnlineForDatabase = {
+                    isOnline: true,
+                    last_changed: firebase.database.ServerValue.TIMESTAMP,
+                };
+
+                database.ref('.info/connected').on('value', function(snapshot) {
+                    if (snapshot.val() === false) {
+                        userStatusFirestoreRef.update({ isOnline: false });
+                        return;
+                    };
+                    userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
+                        userStatusDatabaseRef.set(isOnlineForDatabase);
+                        userStatusFirestoreRef.update({ isOnline: true });
+                    });
+                });
+            }
 
             // MODIFIED: Listen for user data from Firestore with both coin types
             function listenForUserData(uid) {
@@ -1597,32 +1676,6 @@
                 userBalanceSilverDisplay.textContent = silver;
                 userBalanceGoldDisplay.textContent = gold;
             }
-
-            // --- NEW: PUSH NOTIFICATION SETUP ---
-            async function setupPushNotifications() {
-                if ('Notification' in window) {
-                    try {
-                        const permission = await Notification.requestPermission();
-                        if (permission === 'granted') {
-                            console.log('Notification permission granted.');
-                            // We can now show local notifications using new Notification()
-                        }
-                    } catch (err) {
-                        console.error('Error requesting notification permission:', err);
-                    }
-                }
-            }
-
-            // Helper to show local notifications
-            function showNotification(title, body, icon) {
-                if (Notification.permission === 'granted') {
-                    new Notification(title, {
-                        body: body,
-                        icon: icon || 'https://via.placeholder.com/50'
-                    });
-                }
-            }
-
 
             // --- Event Listeners ---
             getStartedBtn.addEventListener('click', () => {
@@ -1694,16 +1747,13 @@
                 }
             });
 
-            // MODIFIED: Signup Form Submission with new coin structure
             signupForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-
                 const profileImg = signupImageUrlInput.value;
                 if (!profileImg) {
                     alert('Please choose a profile picture and wait for it to upload.');
                     return;
                 }
-
                 const name = signupForm['signup-name'].value;
                 const email = signupForm['signup-email'].value;
                 const age = signupForm['signup-age'].value;
@@ -1721,8 +1771,8 @@
                             mobile: mobile,
                             email: email,
                             profileImg: profileImg,
-                            silverCoins: 50, // Give new users 50 free silver coins
-                            goldCoins: 0,    // Start with 0 gold coins
+                            silverCoins: 50,
+                            goldCoins: 0,
                             isOnline: true,
                             about: "Hey there! I am using Batkaro.",
                             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1743,14 +1793,23 @@
                 const email = signinForm['signin-email'].value;
                 const password = signinForm['signin-password'].value;
                 auth.signInWithEmailAndPassword(email, password)
-                    .then(() => { 
+                    .then(async (userCredential) => { 
+                        // CHANGE: Explicitly set isOnline to true on sign-in
+                        await firestore.collection('users').doc(userCredential.user.uid).update({ isOnline: true });
                         signinForm.reset(); 
                     })
                     .catch(err => { alert("Failed to sign in. Please check your email and password."); console.error(err); });
             });
 
             logoutBtn.addEventListener('click', () => {
-                auth.signOut();
+                // CHANGE: Set user offline in Firestore before signing out
+                if (currentUserId) {
+                    firestore.collection('users').doc(currentUserId).update({ isOnline: false })
+                        .then(() => auth.signOut())
+                        .catch(err => console.error("Error setting user offline:", err));
+                } else {
+                    auth.signOut();
+                }
             });
 
             navItems.forEach(item => {
@@ -1761,29 +1820,26 @@
                 const backButton = e.target.closest('.back-button');
                 if (backButton) { showPage(backButton.dataset.page); }
                 
-                // ** CHAT BUTTON CLICK **
                 const chatBtn = e.target.closest('.chat-btn');
                 if (chatBtn) {
                      if (!currentUserId) { alert("Please sign in to chat."); return; }
                     openChat(chatBtn.dataset.profileUid, chatBtn.dataset.profileName, chatBtn.dataset.profileImg);
                 }
 
-                // ** VOICE CALL BUTTON CLICK **
                 const voiceBtn = e.target.closest('.voice-btn');
                 if (voiceBtn) {
                      if (!currentUserId) { alert("Please sign in to call."); return; }
                      const profileCard = voiceBtn.closest('.profile-card');
                      const uid = profileCard.dataset.profileUid;
-                     if(uid) startCall(uid, false); // false = Audio Only
+                     if(uid) startCall(uid, false);
                 }
 
-                // ** VIDEO CALL BUTTON CLICK **
                 const videoBtn = e.target.closest('.video-btn');
                 if (videoBtn) {
                      if (!currentUserId) { alert("Please sign in to call."); return; }
                      const profileCard = videoBtn.closest('.profile-card');
                      const uid = profileCard.dataset.profileUid;
-                     if(uid) startCall(uid, true); // true = Video Call
+                     if(uid) startCall(uid, true);
                 }
 
                 const chatListItem = e.target.closest('.chat-list-item');
@@ -1791,7 +1847,6 @@
                     openChat(chatListItem.dataset.otherUserId, chatListItem.dataset.profileName, chatListItem.dataset.profileImg);
                 }
                 
-                // Add balance button from profile
                 const addBalanceBtn = e.target.closest('.add-balance-btn');
                 if(addBalanceBtn) {
                     showPage('recharge-screen');
@@ -1802,7 +1857,6 @@
             // --- EDIT PROFILE FUNCTIONALITY ---
             editProfileNavBtn.addEventListener('click', async () => {
                 if(!currentUserId) return;
-                
                 try {
                     const userDoc = await firestore.collection('users').doc(currentUserId).get();
                     if(userDoc.exists) {
@@ -1813,26 +1867,19 @@
                         onlineStatusToggle.checked = data.isOnline !== false;
                     }
                     showPage('edit-profile-screen');
-                } catch (e) {
-                    console.error("Error loading profile", e);
-                }
+                } catch (e) { console.error("Error loading profile", e); }
             });
 
             editProfileForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if(!currentUserId) return;
-
                 const newName = document.getElementById('edit-name').value;
                 const newAge = document.getElementById('edit-age').value;
                 const newAbout = document.getElementById('edit-about').value;
                 const isOnline = onlineStatusToggle.checked;
-
                 try {
                     await firestore.collection('users').doc(currentUserId).update({
-                        name: newName,
-                        age: newAge,
-                        about: newAbout,
-                        isOnline: isOnline
+                        name: newName, age: newAge, about: newAbout, isOnline: isOnline
                     });
                     alert("Profile updated successfully!");
                     showPage('profile-screen');
@@ -1842,104 +1889,64 @@
                 }
             });
 
-
-            // --- MODIFIED RECHARGE STORE LOGIC ---
             function generateRechargePlans() {
                 goldRechargePlansContainer.innerHTML = '';
                 silverRechargePlansContainer.innerHTML = '';
-                
-                // Gold Coin Plans (for video calls)
                 const goldPlans = [
                     { amount: 450, coins: 400, bonus: 50, tag: 'Starter' },
                     { amount: 900, coins: 800, bonus: 150, tag: 'Popular' },
                     { amount: 2000, coins: 1800, bonus: 400, tag: 'Best Value' }
                 ];
-                
-                // Silver Coin Plans (for voice and chat)
                 const silverPlans = [
                     { amount: 5, coins: 50, bonus: 0, tag: 'Trial' },
                     { amount: 50, coins: 500, bonus: 50, tag: 'Basic' },
                     { amount: 100, coins: 1000, bonus: 150, tag: 'Value' }
                 ];
-
                 const createPlanElement = (plan, coinType) => {
                     const planElement = document.createElement('div');
                     planElement.className = 'recharge-plan';
-                    if (plan.tag === 'Best Value') {
-                        planElement.classList.add('best-value');
-                    }
-
+                    if (plan.tag === 'Best Value') planElement.classList.add('best-value');
                     const totalCoins = plan.coins + plan.bonus;
                     const coinIconColor = coinType === 'gold' ? 'var(--gold-coin)' : 'var(--silver-coin)';
-                    
-                    let tagHTML = '';
-                    if(plan.tag){
-                         tagHTML = `<div class="plan-tag">${plan.tag}</div>`;
-                    }
-
+                    let tagHTML = plan.tag ? `<div class="plan-tag">${plan.tag}</div>` : '';
                     planElement.innerHTML = `
                         ${tagHTML}
                         <div class="plan-info">
-                             <div class="plan-icon">
-                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${coinIconColor}" d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2Zm1.6,15.55h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2V8.45h3.2v4.42Z"/></svg>
-                             </div>
+                             <div class="plan-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${coinIconColor}" d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10,10-4.48,10-10S17.52,2,12,2Zm1.6,15.55h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2v-1.12h3.2v1.12Zm0-2.23h-3.2V8.45h3.2v4.42Z"/></svg></div>
                              <div class="plan-details">
                                 <span class="coins">${totalCoins} ${coinType.charAt(0).toUpperCase() + coinType.slice(1)} Coins</span>
                                 ${plan.bonus > 0 ? `<span class="bonus">+${plan.bonus} Bonus Coins!</span>` : ''}
                              </div>
                         </div>
-                        <div class="plan-price">₹ ${plan.amount}</div>
-                    `;
-
-                    planElement.addEventListener('click', () => {
-                        initiateRecharge(plan.amount, totalCoins, coinType);
-                    });
-                    
+                        <div class="plan-price">₹ ${plan.amount}</div>`;
+                    planElement.addEventListener('click', () => initiateRecharge(plan.amount, totalCoins, coinType));
                     return planElement;
                 };
-                
-                goldPlans.forEach(plan => {
-                    goldRechargePlansContainer.appendChild(createPlanElement(plan, 'gold'));
-                });
-
-                silverPlans.forEach(plan => {
-                    silverRechargePlansContainer.appendChild(createPlanElement(plan, 'silver'));
-                });
+                goldPlans.forEach(plan => goldRechargePlansContainer.appendChild(createPlanElement(plan, 'gold')));
+                silverPlans.forEach(plan => silverRechargePlansContainer.appendChild(createPlanElement(plan, 'silver')));
             }
 
-            // --- MODIFIED RAZORPAY PAYMENT INTEGRATION ---
             async function initiateRecharge(amount, coinsToAdd, coinType) {
-                if (!currentUserId) {
-                    alert("Please login first to recharge.");
-                    return;
-                }
-
+                if (!currentUserId) { alert("Please login first to recharge."); return; }
                 try {
                     const options = {
                         "key": "rzp_test_YourKey", // Replace with your actual Razorpay Key
-                        "amount": amount * 100, // Amount in paise
+                        "amount": amount * 100,
                         "currency": "INR",
                         "name": "Batkaro App",
                         "description": `${coinsToAdd} ${coinType} Coins Recharge`,
-                        "handler": async function (response) {
+                        "handler": async (response) => {
                             console.log("Payment Successful", response);
                             alert("Payment Successful! Payment ID: " + response.razorpay_payment_id);
                             addCoinsToDatabase(coinsToAdd, coinType);
                         },
-                        "prefill": {
-                            "email": auth.currentUser.email 
-                        },
-                        "theme": {
-                            "color": "#E91E63"
-                        }
+                        "prefill": { "email": auth.currentUser.email }, "theme": { "color": "#E91E63" }
                     };
-
                     const rzp1 = new Razorpay(options);
-                    rzp1.on('payment.failed', function (response){
+                    rzp1.on('payment.failed', (response) => {
                         alert("Payment Failed: " + response.error.description);
                         console.error(response.error);
                     });
-
                     rzp1.open();
                 } catch (error) {
                     console.error("Payment Error: ", error);
@@ -1947,123 +1954,67 @@
                 }
             }
 
-            // --- MODIFIED: Add Coins to Firebase ---
             async function addCoinsToDatabase(coins, coinType) {
                 if (!currentUserId) return;
                 try {
                     const userRef = firestore.collection('users').doc(currentUserId);
                     const fieldToUpdate = coinType === 'gold' ? 'goldCoins' : 'silverCoins';
-                    
-                    await userRef.update({
-                        [fieldToUpdate]: firebase.firestore.FieldValue.increment(coins)
-                    });
-                    
+                    await userRef.update({ [fieldToUpdate]: firebase.firestore.FieldValue.increment(coins) });
                     alert(`Congratulations! ${coins} ${coinType} coins have been added to your account.`);
-                    showPage('home-screen'); // Go back home after successful recharge
+                    showPage('home-screen');
                 } catch (error) {
                     console.error("Error adding coins to database:", error);
                     alert("There was an error adding coins. Please contact support.");
                 }
             }
             
-            // --- MODIFIED BILLING FUNCTIONS ---
             function startCallTimer(costPerMinute, coinType) {
                 if(activeCallInterval) clearInterval(activeCallInterval);
-                
                 activeCallInterval = setInterval(async () => {
-                    if(!currentUserId) {
-                        stopCallTimer();
-                        return;
-                    }
-                    
+                    if(!currentUserId) { stopCallTimer(); return; }
                     const currentBalance = coinType === 'gold' ? currentUserGoldCoins : currentUserSilverCoins;
-                    if (currentBalance < costPerMinute) {
-                         endCall();
-                         alert("Call ended: Insufficient coins.");
-                         return;
-                    }
-
+                    if (currentBalance < costPerMinute) { endCall(); alert("Call ended: Insufficient coins."); return; }
                     try {
                         const userRef = firestore.collection('users').doc(currentUserId);
                         const fieldToUpdate = coinType === 'gold' ? 'goldCoins' : 'silverCoins';
-                        await userRef.update({
-                            [fieldToUpdate]: firebase.firestore.FieldValue.increment(-costPerMinute)
-                        });
-                    } catch (e) {
-                        console.error("Deduction error", e);
-                        endCall();
-                    }
+                        await userRef.update({ [fieldToUpdate]: firebase.firestore.FieldValue.increment(-costPerMinute) });
+                    } catch (e) { console.error("Deduction error", e); endCall(); }
                 }, 60000);
             }
             
-            function stopCallTimer() {
-                if(activeCallInterval) {
-                    clearInterval(activeCallInterval);
-                    activeCallInterval = null;
-                }
-            }
-            
-            function stopChatTimer() {
-                if(activeChatInterval) {
-                    clearInterval(activeChatInterval);
-                    activeChatInterval = null;
-                    console.log("Chat billing stopped.");
-                }
-            }
+            function stopCallTimer() { if(activeCallInterval) { clearInterval(activeCallInterval); activeCallInterval = null; } }
+            function stopChatTimer() { if(activeChatInterval) { clearInterval(activeChatInterval); activeChatInterval = null; console.log("Chat billing stopped."); } }
 
-
-            // --- CHAT AND USER-RELATED FUNCTIONS ---
             function markMessagesAsSeen(chatId, otherUserId) {
                 if (!chatId || !otherUserId) return;
                 const messagesRef = database.ref(`chats/${chatId}`);
                 messagesRef.orderByChild('senderId').equalTo(otherUserId).once('value', snapshot => {
                     snapshot.forEach(childSnapshot => {
-                        const message = childSnapshot.val();
-                        if (message.status !== 'seen') {
-                            childSnapshot.ref.update({ status: 'seen' });
-                        }
+                        if (childSnapshot.val().status !== 'seen') childSnapshot.ref.update({ status: 'seen' });
                     });
                 });
             }
 
-            // MODIFIED: openChat now uses and deducts Silver Coins
             async function openChat(otherUserId, name, img) {
                 if (!currentUserId || !otherUserId) return;
-
                 if (currentUserSilverCoins < COST_CHAT_PER_MIN) {
                     alert("You need at least " + COST_CHAT_PER_MIN + " Silver Coins to start chatting. Please recharge.");
-                    showPage('recharge-screen');
-                    generateRechargePlans();
-                    return;
+                    showPage('recharge-screen'); generateRechargePlans(); return;
                 }
-                
                 stopChatTimer();
-
                 try {
                     const userRef = firestore.collection('users').doc(currentUserId);
-                    await userRef.update({
-                        silverCoins: firebase.firestore.FieldValue.increment(-COST_CHAT_PER_MIN)
-                    });
-
+                    await userRef.update({ silverCoins: firebase.firestore.FieldValue.increment(-COST_CHAT_PER_MIN) });
                     activeChatInterval = setInterval(async () => {
                         if (currentUserSilverCoins < COST_CHAT_PER_MIN) {
                             stopChatTimer();
                             alert("Chat ended due to insufficient Silver Coins. Please recharge to continue.");
-                            showPage('recharge-screen');
-                            generateRechargePlans();
-                            return;
+                            showPage('recharge-screen'); generateRechargePlans(); return;
                         }
-                        await userRef.update({
-                            silverCoins: firebase.firestore.FieldValue.increment(-COST_CHAT_PER_MIN)
-                        });
+                        await userRef.update({ silverCoins: firebase.firestore.FieldValue.increment(-COST_CHAT_PER_MIN) });
                     }, 60000);
-
                     console.log("Chat billing started (Silver Coins).");
-                } catch (error) {
-                    console.error("Error starting chat billing:", error);
-                    alert("A billing error occurred. Please try again.");
-                    return;
-                }
+                } catch (error) { console.error("Error starting chat billing:", error); alert("A billing error occurred. Please try again."); return; }
 
                 const ids = [currentUserId, otherUserId].sort();
                 currentChatId = ids.join('_');
@@ -2079,15 +2030,12 @@
             }
 
             function loadMessages(chatId) {
-                if (messagesRef) { 
-                    messagesRef.off(); 
-                }
+                if (messagesRef) messagesRef.off(); 
                 const messagesContainer = document.querySelector('.chat-messages');
                 messagesContainer.innerHTML = '';
                 messagesRef = database.ref(`chats/${chatId}`);
                 messagesListener = messagesRef.orderByChild('timestamp').limitToLast(100).on('child_added', (snapshot) => {
-                    const message = snapshot.val();
-                    displayMessage(snapshot.key, message);
+                    displayMessage(snapshot.key, snapshot.val());
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 });
             }
@@ -2096,89 +2044,61 @@
                 const messagesContainer = document.querySelector('.chat-messages');
                 const messageBubble = document.createElement('div');
                 messageBubble.classList.add('message-bubble', message.senderId === currentUserId ? 'sent' : 'received');
-
-                // NEW: Show Notification if receiving message and not on screen
-                if (message.senderId !== currentUserId) {
-                   if (document.hidden || !document.getElementById('chat-conversation-screen').classList.contains('active')) {
-                       showNotification('New Message', message.text, null);
-                   }
-                }
-
-                const getTicksHTML = (status) => {
-                    if (status === 'sent') return '<span class="ticks">✓</span>'; 
-                    return `<span class="ticks ${status === 'seen' ? 'seen' : ''}">✓✓</span>`;
-                };
-
+                const getTicksHTML = (status) => status === 'sent' ? '<span class="ticks">✓</span>' : `<span class="ticks ${status === 'seen' ? 'seen' : ''}">✓✓</span>`;
                 messageBubble.innerHTML = `
                     <span class="message-content">${message.text}</span>
                     <div class="message-meta">
                         <span class="timestamp">${new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         ${message.senderId === currentUserId ? getTicksHTML(message.status) : ''}
-                    </div>
-                `;
+                    </div>`;
                 messagesContainer.appendChild(messageBubble);
             }
             
-            // MODIFIED: sendMessage now checks for Silver Coins
             async function sendMessage() {
                 const chatInput = document.getElementById('chat-input-field');
                 const messageText = chatInput.value.trim();
                 if (messageText === '' || !currentChatId || !currentUserId) return;
-
-                if (currentUserSilverCoins < 1) { // Check if user has at least 1 silver coin to send a message
+                if (currentUserSilverCoins < 1) {
                      alert("Low balance! Please recharge Silver Coins to continue chatting.");
-                     showPage('recharge-screen');
-                     generateRechargePlans();
-                     return;
+                     showPage('recharge-screen'); generateRechargePlans(); return;
                 }
-
                 try {
                     const myProfileDoc = await firestore.collection('users').doc(currentUserId).get();
                     const otherProfileDoc = await firestore.collection('users').doc(currentOpenChatOtherUserId).get();
-
-                    if (!myProfileDoc.exists || !otherProfileDoc.exists) {
-                        alert("Cannot send message. User profile not found.");
-                        return;
-                    }
-                    
+                    if (!myProfileDoc.exists || !otherProfileDoc.exists) { alert("Cannot send message. User profile not found."); return; }
                     const myProfileData = myProfileDoc.data();
                     const otherProfileData = otherProfileDoc.data();
-
                     const messageData = { senderId: currentUserId, text: messageText, timestamp: firebase.database.ServerValue.TIMESTAMP, status: 'sent' };
                     await database.ref(`chats/${currentChatId}`).push().set(messageData);
-                    
                     const chatInfo = { lastMessage: messageText, timestamp: firebase.database.ServerValue.TIMESTAMP };
                     await database.ref(`userChats/${currentUserId}/${currentOpenChatOtherUserId}`).set({ ...chatInfo, withUserName: otherProfileData.name, withUserImg: otherProfileData.profileImg });
                     await database.ref(`userChats/${currentOpenChatOtherUserId}/${currentUserId}`).set({ ...chatInfo, withUserName: myProfileData.name, withUserImg: myProfileData.profileImg });
                     
+                    // CHANGE: Trigger notification via OneSignal
+                    sendPushNotification(currentOpenChatOtherUserId, `New Message from ${myProfileData.name}`, messageText);
+
                     chatInput.value = '';
-                } catch (error) {
-                    console.error("Error sending message:", error);
-                    alert("Failed to send message. Please check your connection.");
-                }
+                } catch (error) { console.error("Error sending message:", error); alert("Failed to send message. Please check your connection."); }
             }
 
             function listenForNewChats(uid) {
                 if (chatListListener) chatListListener.off();
                 chatListListener = database.ref(`userChats/${uid}`);
                 chatListListener.on('value', snapshot => {
-                    db.activeChats = [];
-                    snapshot.forEach(child => {
-                        db.activeChats.push({ otherUserId: child.key, ...child.val() });
-                    });
-                    db.activeChats.sort((a, b) => b.timestamp - a.timestamp);
-                    renderChatList();
+                    const activeChats = [];
+                    snapshot.forEach(child => activeChats.push({ otherUserId: child.key, ...child.val() }));
+                    activeChats.sort((a, b) => b.timestamp - a.timestamp);
+                    renderChatList(activeChats);
                 });
             }
 
-            function renderChatList() {
+            function renderChatList(activeChats) {
                 const chatList = document.querySelector('#chat-list-screen .chat-list');
                 chatList.innerHTML = '';
-                if (db.activeChats.length === 0) {
-                    chatList.innerHTML = `<p class="empty-list-placeholder">No active chats.</p>`;
-                    return;
+                if (activeChats.length === 0) {
+                    chatList.innerHTML = `<p class="empty-list-placeholder">No active chats.</p>`; return;
                 }
-                db.activeChats.forEach(chat => {
+                activeChats.forEach(chat => {
                     const listItem = document.createElement('li');
                     listItem.className = 'chat-list-item';
                     listItem.dataset.profileName = chat.withUserName;
@@ -2197,121 +2117,45 @@
             async function fetchAllUsers() {
                 if (!currentUserId) return;
                 try {
-                    const usersSnapshot = await firestore.collection('users').get();
-                    const users = [];
-                    usersSnapshot.forEach(doc => {
-                        if (doc.id !== currentUserId) {
-                            users.push(doc.data());
-                        }
+                    // CHANGE: Listen for real-time updates to user profiles (like online status)
+                    firestore.collection('users').onSnapshot(snapshot => {
+                         const users = [];
+                         snapshot.forEach(doc => {
+                            if (doc.id !== currentUserId) users.push(doc.data());
+                         });
+                         renderUsersOnHomeScreen(users);
                     });
-                    renderUsersOnHomeScreen(users);
-                } catch (error) {
-                    console.error("Error fetching users:", error);
-                }
+                } catch (error) { console.error("Error fetching users:", error); }
             }
             
-            // MODIFIED: renderUsersOnHomeScreen with "Always Online" Fix
             function renderUsersOnHomeScreen(users) {
                 const profileGrid = document.querySelector('.profile-grid');
                 profileGrid.innerHTML = '';
                 users.forEach(user => {
                     const profileCard = document.createElement('div');
                     profileCard.className = 'profile-card';
-                    
-                    // --- MODIFIED: REMOVED OFFLINE CHECK TO MAKE EVERYONE ONLINE ---
-                    // if (user.isOnline === false) {
-                    //     profileCard.classList.add('offline');
-                    // }
-                    // ----------------------------------------------------------------
-
+                    // CHANGE: More robust check for online status
+                    if (!user.isOnline) profileCard.classList.add('offline');
                     profileCard.dataset.profileUid = user.uid;
-
                     profileCard.innerHTML = `
                         <img src="${user.profileImg}" alt="Profile" class="profile-card-img">
                         <div class="online-dot"></div>
                         <div class="profile-card-overlay">
                             <div class="profile-card-header">
                                 <span class="profile-name">${user.name} • ${user.age} Y</span>
-                                <div class="rating">
-                                    <svg viewBox="0 0 24 24"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"></path></svg>
-                                    <span>4.8</span>
-                                </div>
+                                <div class="rating"><svg viewBox="0 0 24 24"><path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z"></path></svg><span>4.8</span></div>
                             </div>
-                            <div class="profile-card-tags">
-                                <span>Hindi</span> • <span>Friendly</span>
-                            </div>
+                            <div class="profile-card-tags"><span>Hindi</span> • <span>Friendly</span></div>
                             <div class="profile-card-footer">
                                 <span class="rate">Chat: ${COST_CHAT_PER_MIN}🥈 | Voice: ${COST_VOICE_PER_MIN}🥈 | Video: ${COST_VIDEO_PER_MIN}🥇 (/min)</span>
                                 <div class="card-actions">
-                                    <button class="card-action-btn chat-btn" data-profile-uid="${user.uid}" data-profile-name="${user.name}" data-profile-img="${user.profileImg}">
-                                        <svg viewBox="0 0 24 24"><path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2M20 16H5.2L4 17.2V4H20V16Z"></path></svg>
-                                    </button>
-                                    <button class="card-action-btn voice-btn">
-                                        <svg viewBox="0 0 24 24"><path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z"></path></svg>
-                                    </button>
-                                    <button class="card-action-btn video-btn">
-                                       <svg viewBox="0 0 24 24"><path d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z"></path></svg>
-                                    </button>
+                                    <button class="card-action-btn chat-btn" data-profile-uid="${user.uid}" data-profile-name="${user.name}" data-profile-img="${user.profileImg}"><svg viewBox="0 0 24 24"><path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2M20 16H5.2L4 17.2V4H20V16Z"></path></svg></button>
+                                    <button class="card-action-btn voice-btn"><svg viewBox="0 0 24 24"><path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z"></path></svg></button>
+                                    <button class="card-action-btn video-btn"><svg viewBox="0 0 24 24"><path d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z"></path></svg></button>
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                     profileGrid.appendChild(profileCard);
-                });
-            }
-
-            // NEW: Load Recent Calls Logic (Call History)
-            function loadRecentCalls() {
-                if(!currentUserId) return;
-                const recentList = document.getElementById('recent-calls-list');
-                
-                // Listening to 'calls' node where callerId is currentUserId
-                // Note: This is a basic implementation. For production, you might want a separate 'callHistory' node.
-                database.ref('calls').orderByChild('callerId').equalTo(currentUserId).limitToLast(20).on('value', snapshot => {
-                    recentList.innerHTML = '';
-                    const calls = [];
-                    snapshot.forEach(child => {
-                         calls.push(child.val());
-                    });
-                    // Reverse to show newest first
-                    calls.reverse().forEach(call => {
-                        // We need the receiver's details. In this simplified structure, we might need to fetch user data
-                        // or store receiver details in the call object. 
-                        // Assuming we want to show who we called. 
-                        // We will try to fetch receiver details from Firestore if possible, or use a placeholder if not stored.
-                        // Ideally, store 'receiverName' and 'receiverImg' in the call object during startCall.
-                        
-                        // Fallback display since we didn't store receiverName in previous code
-                         const listItem = document.createElement('li');
-                         listItem.className = 'chat-list-item';
-                         // Fetch receiver info asynchronously
-                         firestore.collection('users').doc(call.receiverId).get().then(doc => {
-                             if(doc.exists) {
-                                 const receiverData = doc.data();
-                                 listItem.innerHTML = `
-                                    <img src="${receiverData.profileImg || 'https://via.placeholder.com/50'}" alt="${receiverData.name}">
-                                    <div class="chat-info">
-                                        <div class="chat-info-header">
-                                            <span class="chat-name">${receiverData.name}</span>
-                                            <span class="chat-timestamp">${new Date(call.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                        </div>
-                                        <p class="last-message">${call.type === 'video' ? '🎥 Video Call' : '📞 Voice Call'}</p>
-                                    </div>
-                                 `;
-                             } else {
-                                 listItem.innerHTML = `
-                                    <div class="chat-info">
-                                        <p class="last-message">User not found</p>
-                                    </div>
-                                 `;
-                             }
-                         });
-                         recentList.appendChild(listItem);
-                    });
-                    
-                    if(calls.length === 0) {
-                         recentList.innerHTML = '<p class="empty-list-placeholder">No recent calls.</p>';
-                    }
                 });
             }
             
@@ -2320,15 +2164,10 @@
                 try {
                     const constraints = { audio: true, video: isVideo ? { facingMode: currentFacingMode } : false };
                     const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                    localVideo.srcObject = stream;
-                    localStream = stream;
+                    localVideo.srcObject = stream; localStream = stream;
                     localVideo.style.display = isVideo ? 'block' : 'none';
                     return stream;
-                } catch (error) {
-                    console.error('Error accessing media devices.', error);
-                    alert("Could not access camera/microphone. Please check permissions.");
-                    return null;
-                }
+                } catch (error) { console.error('Error accessing media devices.', error); alert("Could not access camera/microphone. Please check permissions."); return null; }
             }
             
             async function switchCamera() {
@@ -2345,80 +2184,60 @@
                     localVideo.srcObject = localStream;
                 } catch (error) {
                     console.error("Error switching camera:", error);
-                    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user'; // Revert on error
+                    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
                     alert("Could not switch camera.");
                 }
             }
             switchCameraBtn.addEventListener('click', switchCamera);
             
-            // MODIFIED: startCall checks and uses the correct coin type
             async function startCall(receiverUid, isVideo) {
                 const coinType = isVideo ? 'gold' : 'silver';
                 const costPerMinute = isVideo ? COST_VIDEO_PER_MIN : COST_VOICE_PER_MIN;
                 const currentBalance = isVideo ? currentUserGoldCoins : currentUserSilverCoins;
-
                 if (currentBalance < costPerMinute) {
                     alert(`You need at least ${costPerMinute} ${coinType} coins for this call. Please recharge.`);
-                    showPage('recharge-screen');
-                    generateRechargePlans();
-                    return;
+                    showPage('recharge-screen'); generateRechargePlans(); return;
                 }
-                
-                await setupLocalMedia(isVideo);
-                if(!localStream) return;
-                
+                await setupLocalMedia(isVideo); if(!localStream) return;
                 try {
                      const userRef = firestore.collection('users').doc(currentUserId);
                      const fieldToUpdate = coinType === 'gold' ? 'goldCoins' : 'silverCoins';
-                     await userRef.update({
-                         [fieldToUpdate]: firebase.firestore.FieldValue.increment(-costPerMinute)
-                     });
+                     await userRef.update({ [fieldToUpdate]: firebase.firestore.FieldValue.increment(-costPerMinute) });
                 } catch(e) {
                     console.error("Initial call deduction failed:", e);
                     alert("A billing error occurred. Call could not be started.");
-                    if (localStream) localStream.getTracks().forEach(track => track.stop());
-                    return;
+                    if (localStream) localStream.getTracks().forEach(track => track.stop()); return;
                 }
                 
                 startCallTimer(costPerMinute, coinType);
                 showPage('call-screen');
-
                 callRef = database.ref('calls').push();
                 currentCallId = callRef.key;
                 peerConnection = new RTCPeerConnection(servers);
-
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
                 peerConnection.ontrack = event => remoteVideo.srcObject = event.streams[0];
-                peerConnection.onicecandidate = event => {
-                    if (event.candidate) callRef.child('offerCandidates').push(event.candidate.toJSON());
-                };
-
+                peerConnection.onicecandidate = event => { if (event.candidate) callRef.child('offerCandidates').push(event.candidate.toJSON()); };
                 const offerDescription = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offerDescription);
-
                 const callerDoc = await firestore.collection('users').doc(currentUserId).get();
                 const callerData = callerDoc.data();
+                
+                // CHANGE: Log call to history
+                logCallHistory(currentUserId, receiverUid, isVideo ? 'video' : 'voice');
+
+                // CHANGE: Trigger notification for the call via OneSignal
+                sendPushNotification(receiverUid, "Incoming Call", `You have an incoming ${isVideo ? 'video' : 'voice'} call from ${callerData.name}`);
 
                 await callRef.set({
                     offer: { sdp: offerDescription.sdp, type: offerDescription.type },
-                    callerId: currentUserId,
-                    callerName: callerData.name || "Unknown",
-                    callerImg: callerData.profileImg || "",
-                    receiverId: receiverUid,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    type: isVideo ? 'video' : 'voice'
+                    callerId: currentUserId, callerName: callerData.name || "Unknown", callerImg: callerData.profileImg || "",
+                    receiverId: receiverUid, timestamp: firebase.database.ServerValue.TIMESTAMP, type: isVideo ? 'video' : 'voice'
                 });
-
                 callRef.on('value', (snapshot) => {
                     const data = snapshot.val();
-                    if (data && data.answer && !peerConnection.currentRemoteDescription) {
-                        peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-                    }
+                    if (data && data.answer && !peerConnection.currentRemoteDescription) peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
                 });
-
-                callRef.child('answerCandidates').on('child_added', (snapshot) => {
-                    peerConnection.addIceCandidate(new RTCIceCandidate(snapshot.val()));
-                });
+                callRef.child('answerCandidates').on('child_added', (snapshot) => { peerConnection.addIceCandidate(new RTCIceCandidate(snapshot.val())); });
             }
 
             function listenForIncomingCalls(uid) {
@@ -2429,68 +2248,107 @@
                         incomingCallerName.textContent = data.callerName;
                         incomingCallerImg.src = data.callerImg || "https://via.placeholder.com/100";
                         incomingCallModal.classList.add('active');
-                        // NEW: Show notification for incoming call
-                        showNotification('Incoming Call', `${data.callerName} is calling...`, data.callerImg);
                     }
                 });
             }
 
             acceptCallBtn.addEventListener('click', async () => {
                 incomingCallModal.classList.remove('active');
-                
                 callRef = database.ref(`calls/${currentCallId}`);
                 const callSnapshot = await callRef.get();
                 const callData = callSnapshot.val();
                 
-                const isVideo = callData.type === 'video';
-                // --- MODIFIED: REMOVED COIN CHECK FOR RECEIVER ---
-                // The receiver does not need coins to accept.
-                // -------------------------------------------------
+                // --- CHANGE: REMOVED COIN CHECK AND DEDUCTION FOR RECEIVER ---
+                // The person receiving the call is NOT charged.
 
-                await setupLocalMedia(isVideo);
+                await setupLocalMedia(callData.type === 'video');
                 if(!localStream) return;
                 
                 showPage('call-screen');
                 peerConnection = new RTCPeerConnection(servers);
                 localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
                 peerConnection.ontrack = event => remoteVideo.srcObject = event.streams[0];
-                peerConnection.onicecandidate = event => {
-                    if (event.candidate) callRef.child('answerCandidates').push(event.candidate.toJSON());
-                };
+                peerConnection.onicecandidate = event => { if (event.candidate) callRef.child('answerCandidates').push(event.candidate.toJSON()); };
 
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(callData.offer));
                 const answerDescription = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answerDescription);
-
                 await callRef.update({ answer: { type: answerDescription.type, sdp: answerDescription.sdp } });
-                callRef.child('offerCandidates').on('child_added', (snapshot) => {
-                    peerConnection.addIceCandidate(new RTCIceCandidate(snapshot.val()));
-                });
+                callRef.child('offerCandidates').on('child_added', (snapshot) => { peerConnection.addIceCandidate(new RTCIceCandidate(snapshot.val())); });
             });
 
-            rejectCallBtn.addEventListener('click', () => {
-                incomingCallModal.classList.remove('active');
-            });
-
+            rejectCallBtn.addEventListener('click', () => { incomingCallModal.classList.remove('active'); });
             hangupBtn.addEventListener('click', endCall);
 
             function endCall() {
                 stopCallTimer();
-                if (peerConnection) {
-                    peerConnection.close();
-                    peerConnection = null;
-                }
-                if (localStream) {
-                    localStream.getTracks().forEach(track => track.stop());
-                    localStream = null;
-                }
-                localVideo.srcObject = null;
-                remoteVideo.srcObject = null;
+                if (peerConnection) { peerConnection.close(); peerConnection = null; }
+                if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
+                localVideo.srcObject = null; remoteVideo.srcObject = null;
                 showPage('home-screen');
                 if (callRef) callRef.off();
-                currentCallId = null;
-                currentFacingMode = 'user';
+                currentCallId = null; currentFacingMode = 'user';
             }
+
+            // --- CHANGE: NEW CALL HISTORY FUNCTIONS ---
+            async function logCallHistory(callerId, receiverId, callType) {
+                try {
+                    const callerDoc = await firestore.collection('users').doc(callerId).get();
+                    const receiverDoc = await firestore.collection('users').doc(receiverId).get();
+                    if (!callerDoc.exists || !receiverDoc.exists) return;
+                    
+                    const callerData = callerDoc.data();
+                    const receiverData = receiverDoc.data();
+                    const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+                    // Log for caller
+                    const callerLog = { withUserId: receiverId, withUserName: receiverData.name, withUserImg: receiverData.profileImg, type: callType, direction: 'outgoing', timestamp: timestamp };
+                    await firestore.collection('users').doc(callerId).collection('callHistory').add(callerLog);
+                    
+                    // Log for receiver
+                    const receiverLog = { withUserId: callerId, withUserName: callerData.name, withUserImg: callerData.profileImg, type: callType, direction: 'incoming', timestamp: timestamp };
+                    await firestore.collection('users').doc(receiverId).collection('callHistory').add(receiverLog);
+                } catch(e) { console.error("Error logging call history:", e); }
+            }
+
+            function listenForRecentCalls(uid) {
+                if(callHistoryListener) callHistoryListener(); // Detach previous listener
+                const historyRef = firestore.collection('users').doc(uid).collection('callHistory').orderBy('timestamp', 'desc').limit(50);
+                callHistoryListener = historyRef.onSnapshot(snapshot => {
+                    const calls = [];
+                    snapshot.forEach(doc => calls.push(doc.data()));
+                    renderRecentCalls(calls);
+                });
+            }
+
+            function renderRecentCalls(calls) {
+                const recentCallsList = document.getElementById('recent-calls-list');
+                recentCallsList.innerHTML = '';
+                if(calls.length === 0) {
+                    recentCallsList.innerHTML = `<p class="empty-list-placeholder">No recent calls.</p>`;
+                    return;
+                }
+                calls.forEach(call => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'chat-list-item'; // Re-use the same style
+                    const callTime = call.timestamp ? new Date(call.timestamp.toDate()).toLocaleString() : 'Just now';
+                    const icon = call.type === 'video' ? '🎬' : '📞';
+                    const direction = call.direction === 'outgoing' ? 'Outgoing' : 'Incoming';
+                    
+                    listItem.innerHTML = `
+                        <img src="${call.withUserImg || 'https://via.placeholder.com/50'}" alt="${call.withUserName}">
+                        <div class="chat-info">
+                            <div class="chat-info-header">
+                                <span class="chat-name">${call.withUserName}</span>
+                                <span class="chat-timestamp">${callTime}</span>
+                            </div>
+                            <p class="last-message">${icon} ${direction} ${call.type} call</p>
+                        </div>
+                    `;
+                    recentCallsList.appendChild(listItem);
+                });
+            }
+
         });
     </script>
 </body>
