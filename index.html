@@ -1645,13 +1645,17 @@
 
                 database.ref('.info/connected').on('value', function(snapshot) {
                     if (snapshot.val() === false) {
-                        userStatusFirestoreRef.update({ isOnline: false });
                         return;
                     };
                     userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
                         userStatusDatabaseRef.set(isOnlineForDatabase);
                         userStatusFirestoreRef.update({ isOnline: true });
                     });
+                });
+                
+                // Add window unload listener to attempt to set offline on tab close
+                window.addEventListener('beforeunload', () => {
+                   userStatusDatabaseRef.set(isOfflineForDatabase);
                 });
             }
 
@@ -1802,13 +1806,17 @@
             });
 
             logoutBtn.addEventListener('click', () => {
-                // CHANGE: Set user offline in Firestore before signing out
+                // CHANGE: Set user offline in Firestore before signing out AND RELOAD
                 if (currentUserId) {
                     firestore.collection('users').doc(currentUserId).update({ isOnline: false })
                         .then(() => auth.signOut())
-                        .catch(err => console.error("Error setting user offline:", err));
+                        .then(() => window.location.reload()) // Force reload to clear state
+                        .catch(err => {
+                            console.error("Error setting user offline:", err);
+                            auth.signOut().then(() => window.location.reload());
+                        });
                 } else {
-                    auth.signOut();
+                    auth.signOut().then(() => window.location.reload());
                 }
             });
 
@@ -2132,6 +2140,9 @@
                 const profileGrid = document.querySelector('.profile-grid');
                 profileGrid.innerHTML = '';
                 users.forEach(user => {
+                    // CHANGE: Only show users who are ONLINE
+                    if (!user.isOnline) return;
+
                     const profileCard = document.createElement('div');
                     profileCard.className = 'profile-card';
                     // CHANGE: More robust check for online status
