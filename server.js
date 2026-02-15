@@ -3,6 +3,7 @@ const Razorpay = require('razorpay');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
+const https = require('https'); // Notification bhejne ke liye native module
 require('dotenv').config();
 
 const app = express();
@@ -11,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// --- CHANGE: Path fixing logic ---
+// --- Static Files Path Setup ---
 // Yeh line check karegi ki index.html kahan hai (Root me ya Public folder me)
 app.use(express.static(__dirname)); 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -22,7 +23,7 @@ const razorpay = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET 
 });
 
-// Order Create API
+// --- API 1: Razorpay Order Create ---
 app.post('/create-order', async (req, res) => {
     try {
         const { amount } = req.body;
@@ -39,7 +40,51 @@ app.post('/create-order', async (req, res) => {
     }
 });
 
-// Home Route (Updated)
+// --- API 2: Send OneSignal Notification (NEW - Added to fix notification issue) ---
+app.post('/send-notification', (req, res) => {
+    const { targetUid, title, message } = req.body;
+
+    // Data to send to OneSignal
+    const data = JSON.stringify({
+        app_id: "4e0f6959-307c-4cb9-89a2-c3982dcebdc1", // Aapka App ID
+        include_aliases: { "external_id": [targetUid] },
+        headings: { "en": title },
+        contents: { "en": message },
+        target_channel: "push"
+    });
+
+    const options = {
+        hostname: 'onesignal.com',
+        port: 443,
+        path: '/api/v1/notifications',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Basic os_v2_app_jyhwswjqprgltcncyomc3tv5yfjmtbsw4s4ukmneruoyreoy3qgz6fw4vl757f4gy4kay6pch6uazclkz64gt6hqiyhjjt3w5awcgta' // Aapka API Key
+        }
+    };
+
+    const request = https.request(options, (response) => {
+        let body = '';
+        response.on('data', (d) => {
+            body += d;
+        });
+        response.on('end', () => {
+            console.log('Notification Sent:', body);
+            res.status(200).json({ success: true, response: JSON.parse(body) });
+        });
+    });
+
+    request.on('error', (e) => {
+        console.error('Notification Error:', e);
+        res.status(500).json({ success: false, error: e.message });
+    });
+
+    request.write(data);
+    request.end();
+});
+
+// --- Home Route ---
 app.get('/', (req, res) => {
     // Koshish karega 'public/index.html' dhoondne ki
     let filePath = path.join(__dirname, 'public', 'index.html');
