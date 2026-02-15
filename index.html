@@ -1471,9 +1471,15 @@
                 body: JSON.stringify({
                     app_id: ONE_SIGNAL_APP_ID,
                     include_aliases: { "external_id": [targetUid] },
+                    // FALLBACK FOR OLDER DEVICES/SDKS
+                    include_external_user_ids: [targetUid], 
                     headings: { "en": title },
                     contents: { "en": message },
-                    target_channel: "push"
+                    target_channel: "push",
+                    // IMPORTANT: FORCE HIGH PRIORITY FOR BACKGROUND DELIVERY
+                    priority: 10,
+                    content_available: true, // Wakes up the app
+                    url: window.location.href // Opens app on click
                 })
             };
 
@@ -1481,8 +1487,11 @@
                 const response = await fetch('https://onesignal.com/api/v1/notifications', options);
                 const data = await response.json();
                 console.log("OneSignal Notification Status:", data);
+                if(data.errors){
+                     console.error("OneSignal Error Details:", data.errors);
+                }
             } catch (err) {
-                console.error("OneSignal Error:", err);
+                console.error("OneSignal Network Error:", err);
             }
         }
 
