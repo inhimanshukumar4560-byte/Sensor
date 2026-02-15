@@ -1452,6 +1452,7 @@
                 notifyButton: {
                     enable: true,
                 },
+                allowLocalhostAsSecureOrigin: true, // IMPORTANT FOR TESTING
             });
         });
 
@@ -1477,8 +1478,9 @@
             };
 
             try {
-                await fetch('https://onesignal.com/api/v1/notifications', options);
-                console.log("OneSignal Notification Sent");
+                const response = await fetch('https://onesignal.com/api/v1/notifications', options);
+                const data = await response.json();
+                console.log("OneSignal Notification Status:", data);
             } catch (err) {
                 console.error("OneSignal Error:", err);
             }
@@ -1602,9 +1604,11 @@
                 if (user) {
                     currentUserId = user.uid;
                     
-                    // --- NEW: LOGIN TO ONESIGNAL ---
+                    // --- NEW: LOGIN TO ONESIGNAL AND PROMPT FOR PERMISSION ---
                     OneSignalDeferred.push(function(OneSignal) {
                         OneSignal.login(user.uid);
+                        // FORCE PERMISSION PROMPT
+                        OneSignal.User.PushSubscription.optIn();
                     });
 
                     setupPresence(user.uid); // CHANGE: Setup online/offline presence
@@ -1645,17 +1649,13 @@
 
                 database.ref('.info/connected').on('value', function(snapshot) {
                     if (snapshot.val() === false) {
+                        userStatusFirestoreRef.update({ isOnline: false });
                         return;
                     };
                     userStatusDatabaseRef.onDisconnect().set(isOfflineForDatabase).then(function() {
                         userStatusDatabaseRef.set(isOnlineForDatabase);
                         userStatusFirestoreRef.update({ isOnline: true });
                     });
-                });
-                
-                // Add window unload listener to attempt to set offline on tab close
-                window.addEventListener('beforeunload', () => {
-                   userStatusDatabaseRef.set(isOfflineForDatabase);
                 });
             }
 
@@ -1806,17 +1806,13 @@
             });
 
             logoutBtn.addEventListener('click', () => {
-                // CHANGE: Set user offline in Firestore before signing out AND RELOAD
+                // CHANGE: Set user offline in Firestore before signing out
                 if (currentUserId) {
                     firestore.collection('users').doc(currentUserId).update({ isOnline: false })
                         .then(() => auth.signOut())
-                        .then(() => window.location.reload()) // Force reload to clear state
-                        .catch(err => {
-                            console.error("Error setting user offline:", err);
-                            auth.signOut().then(() => window.location.reload());
-                        });
+                        .catch(err => console.error("Error setting user offline:", err));
                 } else {
-                    auth.signOut().then(() => window.location.reload());
+                    auth.signOut();
                 }
             });
 
@@ -2030,7 +2026,7 @@
 
                 const headerInfo = document.querySelector('#chat-conversation-screen .chat-header-info');
                 headerInfo.querySelector('.name').textContent = name;
-                headerInfo.querySelector('img').src = img;
+                headerInfo.querySelector('img').src = img || "https://via.placeholder.com/50";
                 
                 loadMessages(currentChatId);
                 markMessagesAsSeen(currentChatId, otherUserId);
@@ -2044,7 +2040,9 @@
                 messagesRef = database.ref(`chats/${chatId}`);
                 messagesListener = messagesRef.orderByChild('timestamp').limitToLast(100).on('child_added', (snapshot) => {
                     displayMessage(snapshot.key, snapshot.val());
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    setTimeout(() => {
+                         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }, 50);
                 });
             }
 
@@ -2073,17 +2071,27 @@
                 try {
                     const myProfileDoc = await firestore.collection('users').doc(currentUserId).get();
                     const otherProfileDoc = await firestore.collection('users').doc(currentOpenChatOtherUserId).get();
-                    if (!myProfileDoc.exists || !otherProfileDoc.exists) { alert("Cannot send message. User profile not found."); return; }
+                    
+                    if (!myProfileDoc.exists) { alert("Cannot send message. Your profile not found."); return; }
+                    
                     const myProfileData = myProfileDoc.data();
-                    const otherProfileData = otherProfileDoc.data();
+                    const otherProfileData = otherProfileDoc.exists ? otherProfileDoc.data() : { name: "User", profileImg: "https://via.placeholder.com/50" };
+                    
                     const messageData = { senderId: currentUserId, text: messageText, timestamp: firebase.database.ServerValue.TIMESTAMP, status: 'sent' };
                     await database.ref(`chats/${currentChatId}`).push().set(messageData);
+                    
                     const chatInfo = { lastMessage: messageText, timestamp: firebase.database.ServerValue.TIMESTAMP };
-                    await database.ref(`userChats/${currentUserId}/${currentOpenChatOtherUserId}`).set({ ...chatInfo, withUserName: otherProfileData.name, withUserImg: otherProfileData.profileImg });
-                    await database.ref(`userChats/${currentOpenChatOtherUserId}/${currentUserId}`).set({ ...chatInfo, withUserName: myProfileData.name, withUserImg: myProfileData.profileImg });
+                    
+                    // FIXED: Using || "" fallback to prevent crashes if profile data is undefined
+                    await database.ref(`userChats/${currentUserId}/${currentOpenChatOtherUserId}`).set({ ...chatInfo, withUserName: otherProfileData.name || "User", withUserImg: otherProfileData.profileImg || "https://via.placeholder.com/50" });
+                    
+                    // FIXED: Update receiver's list safely
+                    database.ref(`userChats/${currentOpenChatOtherUserId}/${currentUserId}`).set({ ...chatInfo, withUserName: myProfileData.name || "User", withUserImg: myProfileData.profileImg || "https://via.placeholder.com/50" }).catch(e => console.error("Error updating receiver list", e));
                     
                     // CHANGE: Trigger notification via OneSignal
-                    sendPushNotification(currentOpenChatOtherUserId, `New Message from ${myProfileData.name}`, messageText);
+                    // Added console log to verify triggering
+                    console.log("Triggering Push Notification to:", currentOpenChatOtherUserId);
+                    await sendPushNotification(currentOpenChatOtherUserId, `New Message from ${myProfileData.name || "User"}`, messageText);
 
                     chatInput.value = '';
                 } catch (error) { console.error("Error sending message:", error); alert("Failed to send message. Please check your connection."); }
@@ -2095,7 +2103,12 @@
                 chatListListener.on('value', snapshot => {
                     const activeChats = [];
                     snapshot.forEach(child => activeChats.push({ otherUserId: child.key, ...child.val() }));
-                    activeChats.sort((a, b) => b.timestamp - a.timestamp);
+                    // Robust sort handling in case timestamp is missing
+                    activeChats.sort((a, b) => {
+                        const timeA = a.timestamp || 0;
+                        const timeB = b.timestamp || 0;
+                        return timeB - timeA;
+                    });
                     renderChatList(activeChats);
                 });
             }
@@ -2109,10 +2122,10 @@
                 activeChats.forEach(chat => {
                     const listItem = document.createElement('li');
                     listItem.className = 'chat-list-item';
-                    listItem.dataset.profileName = chat.withUserName;
-                    listItem.dataset.profileImg = chat.withUserImg;
+                    listItem.dataset.profileName = chat.withUserName || "User";
+                    listItem.dataset.profileImg = chat.withUserImg || "https://via.placeholder.com/50";
                     listItem.dataset.otherUserId = chat.otherUserId;
-                    listItem.innerHTML = `<img src="${chat.withUserImg || 'https://via.placeholder.com/50'}" alt="${chat.withUserName}"><div class="chat-info"><div class="chat-info-header"><span class="chat-name">${chat.withUserName}</span><span class="chat-timestamp">${new Date(chat.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div><p class="last-message">${chat.lastMessage}</p></div>`;
+                    listItem.innerHTML = `<img src="${chat.withUserImg || 'https://via.placeholder.com/50'}" alt="${chat.withUserName}"><div class="chat-info"><div class="chat-info-header"><span class="chat-name">${chat.withUserName || "User"}</span><span class="chat-timestamp">${new Date(chat.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div><p class="last-message">${chat.lastMessage}</p></div>`;
                     chatList.appendChild(listItem);
                 });
             }
@@ -2140,9 +2153,6 @@
                 const profileGrid = document.querySelector('.profile-grid');
                 profileGrid.innerHTML = '';
                 users.forEach(user => {
-                    // CHANGE: Only show users who are ONLINE
-                    if (!user.isOnline) return;
-
                     const profileCard = document.createElement('div');
                     profileCard.className = 'profile-card';
                     // CHANGE: More robust check for online status
