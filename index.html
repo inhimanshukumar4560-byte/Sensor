@@ -2158,33 +2158,70 @@
                 }
             }
 
+            // --- FIXED: LISTEN FOR NEW CHATS (Multiple User Fix) ---
             function listenForNewChats(uid) {
                 if (chatListListener) chatListListener.off();
                 chatListListener = database.ref(`userChats/${uid}`);
+                
                 chatListListener.on('value', snapshot => {
+                    // Reset active chats array safely
                     db.activeChats = [];
-                    snapshot.forEach(child => {
-                        db.activeChats.push({ otherUserId: child.key, ...child.val() });
-                    });
-                    db.activeChats.sort((a, b) => b.timestamp - a.timestamp);
+                    
+                    if (snapshot.exists()) {
+                        snapshot.forEach(child => {
+                            const chatData = child.val();
+                            // Only push if data exists to prevent errors
+                            if (chatData) {
+                                db.activeChats.push({ 
+                                    otherUserId: child.key, 
+                                    ...chatData 
+                                });
+                            }
+                        });
+                        
+                        // Sort safely (handling missing timestamps by defaulting to 0)
+                        db.activeChats.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                    }
+                    
+                    // Always call render, even if empty
                     renderChatList();
                 });
             }
 
+            // --- FIXED: RENDER CHAT LIST (Prevents breaking on missing data) ---
             function renderChatList() {
                 const chatList = document.querySelector('#chat-list-screen .chat-list');
                 chatList.innerHTML = '';
-                if (db.activeChats.length === 0) {
+                
+                if (!db.activeChats || db.activeChats.length === 0) {
                     chatList.innerHTML = `<p class="empty-list-placeholder">No active chats.</p>`;
                     return;
                 }
+                
                 db.activeChats.forEach(chat => {
                     const listItem = document.createElement('li');
                     listItem.className = 'chat-list-item';
-                    listItem.dataset.profileName = chat.withUserName;
-                    listItem.dataset.profileImg = chat.withUserImg;
+                    
+                    // Fallback for missing names or images to prevent UI glitches
+                    const displayName = chat.withUserName || 'Unknown User';
+                    const displayImg = chat.withUserImg || 'https://via.placeholder.com/50';
+                    const displayMsg = chat.lastMessage || '';
+                    const displayTime = chat.timestamp ? new Date(chat.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+                    listItem.dataset.profileName = displayName;
+                    listItem.dataset.profileImg = displayImg;
                     listItem.dataset.otherUserId = chat.otherUserId;
-                    listItem.innerHTML = `<img src="${chat.withUserImg || 'https://via.placeholder.com/50'}" alt="${chat.withUserName}"><div class="chat-info"><div class="chat-info-header"><span class="chat-name">${chat.withUserName}</span><span class="chat-timestamp">${new Date(chat.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div><p class="last-message">${chat.lastMessage}</p></div>`;
+                    
+                    listItem.innerHTML = `
+                        <img src="${displayImg}" alt="${displayName}">
+                        <div class="chat-info">
+                            <div class="chat-info-header">
+                                <span class="chat-name">${displayName}</span>
+                                <span class="chat-timestamp">${displayTime}</span>
+                            </div>
+                            <p class="last-message">${displayMsg}</p>
+                        </div>
+                    `;
                     chatList.appendChild(listItem);
                 });
             }
